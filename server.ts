@@ -1,6 +1,7 @@
 import express, { Application } from "express";
 import dotenv from "dotenv";
 import connectDB from "./config/dbConnection";
+import bodyParser from "body-parser";
 
 // Load environment variables
 dotenv.config();
@@ -13,7 +14,11 @@ const app: Application = express();
 const port: number = Number(process.env.PORT) || 5000;
 
 app.use(express.json());
+app.use(bodyParser.json());
 app.use("/api", require("./routes/boardRoutes"));
+app.use("/api", require("./routes/authRoutes/userRoutes"));
+app.use("/api", require("./routes/authRoutes/firebaseAuthRoutes"));
+app.use("/api", require("./routes/authRoutes/commonAuthRoutes"));
 
 app.listen(port, () => {
   console.log(`YAYY Server running on port ${port}`);

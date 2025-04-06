@@ -20,4 +20,4 @@ router
   .put(updateUserBoardData)
   .delete(deleteUserBoard);
 
-module.exports = router;
+export { router };
