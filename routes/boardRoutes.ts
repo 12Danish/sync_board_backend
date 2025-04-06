@@ -20,4 +20,4 @@ router
   .put(updateUserBoardData)
   .delete(deleteUserBoard);
 
-export { router };
+export default router;

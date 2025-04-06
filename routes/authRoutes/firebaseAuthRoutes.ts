@@ -6,4 +6,4 @@ const router: Router = express.Router();
 
 router.route("/firebaseLogin").post(firebaseLogin);
 
-export { firebaseLogin };
+export default router;

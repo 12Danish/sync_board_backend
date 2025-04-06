@@ -2,7 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 /* The User model is designed to support both local jwt auth and firebase google/github auth */
 export interface IUser extends Document {
-  userame?: string;
+  username?: string;
   password?: string;
   authprovider: "local" | "google" | "github";
   firebaseUid?: string;
@@ -27,7 +27,16 @@ const UserSchema: Schema = new Schema(
   { timestamps: true }
 );
 
+// Define the toJSON method to exclude the password field
+UserSchema.methods.toJSON = function () {
+  const obj = this.toObject();
+  delete obj.password; // Remove password from the response
+  delete obj._id; // Remove _id from the response
+  delete obj.__v; // Remove __v from the response
+  return obj;
+};
+
 UserSchema.index({ email: 1, authProvider: 1 }, { unique: true });
 
-const Board = mongoose.model<IUser>("User", UserSchema);
-export default Board;
+const User = mongoose.model<IUser>("User", UserSchema);
+export default User;

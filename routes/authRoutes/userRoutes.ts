@@ -6,11 +6,16 @@ import {
   getUserProfile,
   updateUserProfile,
 } from "../../controllers/authControllers/userAuthControllers";
-
+import { ValidationMiddleWare } from "../../middleware/authHandler/userAuthHandler";
 const router: Router = express.Router();
 
-router.route("/userRegister").post(userRegister);
-router.route("/userLogin").post(userLogin);
+router
+  .route("/userRegister")
+  .post(ValidationMiddleWare.validateRegisterInput(), userRegister);
+
+router
+  .route("/userLogin")
+  .post(ValidationMiddleWare.validLoginInput(), userLogin);
 router.route("/userProfile").get(getUserProfile).put(updateUserProfile);
 
-export { router };
+export default router;

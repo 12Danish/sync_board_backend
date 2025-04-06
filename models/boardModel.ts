@@ -1,9 +1,10 @@
 import mongoose, { Schema, Document } from "mongoose";
+import { nanoid } from "nanoid";
 
 // Define the TypeScript Interface
 export interface IBoard extends Document {
-  name: string;
   documentId: string;
+  name: string;
   createdAt: Date;
   updatedAt: Date;
   collaborators: string[]; // Array of user IDs or emails
@@ -13,8 +14,13 @@ export interface IBoard extends Document {
 
 const BoardSchema: Schema = new Schema(
   {
+    documentId: {
+      type: Number,
+      required: true,
+      unique: true,
+      default: () => nanoid(6),
+    },
     name: { type: String, required: true },
-    documentId: { type: Number, required: true, unique: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
     collaborators: [{ type: Schema.Types.ObjectId, ref: "User" }],
     shapes: { type: [Schema.Types.Mixed], default: [] },
