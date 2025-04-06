@@ -20,7 +20,7 @@ const BoardSchema: Schema = new Schema(
     shapes: { type: [Schema.Types.Mixed], default: [] },
     thumbnail_img: { type: String, default: "" },
   },
-  { timestamps: true }
+  { timestamps: true } // Allows to automatically fill time fields
 );
 
 const Board = mongoose.model<IBoard>("Board", BoardSchema);
