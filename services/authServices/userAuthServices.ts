@@ -1,9 +1,14 @@
 import bcrypt from "bcryptjs";
 import User from "../../models/userModel";
-import { CustomError } from "../../utils/CustomError";
-
+import { CustomError } from "../../utils/customError";
+import { generateToken } from "../../utils/jwtUtils";
 export interface UserRegisterInput {
   username: string;
+  email: string;
+  password: string;
+}
+
+export interface UserLoginInput {
   email: string;
   password: string;
 }
@@ -47,7 +52,65 @@ class UserAuthServices {
     return newUser;
   }
 
-  static async userLoginService() {}
+  /**
+   * Authenticates a user with email and password for the 'local' auth provider.
+   *
+   * - Checks if a user exists with the given email and 'local' auth provider.
+   * - Verifies the password using bcrypt.
+   * - Generates a JWT token upon successful authentication.
+   *
+   * @param {UserLoginInput} data - An object containing the user's email and password.
+   * @param {string} data.email - The email of the user attempting to log in.
+   * @param {string} data.password - The password entered by the user.
+   *
+   * @throws {CustomError} - Throws an error with status 401 if the user is not found or the password is invalid.
+   *
+   * @returns {Promise<{
+   *   token: string;
+   *   user: {
+   *     id: string;
+   *     email: string;
+   *     username: string;
+   *     authProvider: string;
+   *   };
+   * }>} An object containing the JWT token and basic user information.
+   */
+  static async userLoginService(data: UserLoginInput) {
+    const { email, password } = data;
+    // Find the user by email and local provider
+    const user = await User.findOne({
+      email,
+      authProvider: "local",
+    });
+
+    if (!user) {
+      throw new CustomError("User with this email not found", 401);
+    }
+
+    // Compare passwords using bcrypt
+    const isPasswordValid = await bcrypt.compare(password, user.password ?? "");
+
+    // If user authentiation fails return
+    if (!isPasswordValid) {
+      throw new CustomError("Invalid email or password", 401);
+    }
+
+    const token = generateToken({
+      id: user._id,
+      email: user.email,
+      authProvider: user.authProvider,
+    });
+
+    return {
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        username: user.username,
+        authProvider: user.authProvider,
+      },
+    };
+  }
 
   static async userGetService() {}
 

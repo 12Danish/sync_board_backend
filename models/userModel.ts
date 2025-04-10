@@ -4,7 +4,8 @@ import mongoose, { Schema, Document } from "mongoose";
 export interface IUser extends Document {
   username?: string;
   password?: string;
-  authprovider: "local" | "google" | "github";
+  email: string;
+  authProvider: "local" | "google" | "github";
   firebaseUid?: string;
   profileImage?: string;
   createdAt: Date;

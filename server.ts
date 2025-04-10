@@ -7,6 +7,7 @@ import boardRoutes from "./routes/boardRoutes";
 import userRoutes from "./routes/authRoutes/userRoutes";
 import firebaseAuthRoutes from "./routes/authRoutes/firebaseAuthRoutes";
 import commonAuthRoutes from "./routes/authRoutes/commonAuthRoutes";
+import cookieParser from "cookie-parser";
 // Load environment variables
 dotenv.config();
 
@@ -18,6 +19,7 @@ const app: Application = express();
 const port: number = Number(process.env.PORT) || 5000;
 
 app.use(express.json());
+app.use(cookieParser());
 app.use(bodyParser.json());
 app.use("/api", boardRoutes);
 app.use("/api", userRoutes);

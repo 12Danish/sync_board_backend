@@ -27,7 +27,36 @@ const userRegister = asyncHandler(async (req, res) => {
 // @desc Controller for users to login via JWT
 // @access public
 // @route POST api/userLogin
-const userLogin = asyncHandler(async () => {});
+const userLogin = asyncHandler(async (req, res) => {
+  try {
+    const { email, password } = req.body;
+
+    const { token, user } = await UserAuthServices.userLoginService({
+      email,
+      password,
+    });
+
+    // Set JWT token in client cookie
+    res.cookie("token", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === "production", // Will be false for localhost in dev.
+      sameSite: "none", // Allow cross-origin cookies
+      maxAge: 24 * 60 * 60 * 1000, // 1 day
+    });
+
+    // Return success response with user data
+    res.status(200).json({
+      message: "Login successful",
+      user,
+    });
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
 
 // @desc Controller for users to get their perofile info
 // @access private
