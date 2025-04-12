@@ -2,6 +2,8 @@ import bcrypt from "bcryptjs";
 import User from "../../models/userModel";
 import { CustomError } from "../../utils/customError";
 import { generateToken } from "../../utils/jwtUtils";
+import { ObjectId } from "mongodb";
+
 export interface UserRegisterInput {
   username: string;
   email: string;
@@ -12,7 +14,6 @@ export interface UserLoginInput {
   email: string;
   password: string;
 }
-
 class UserAuthServices {
   /**
    * Service for creating a new user.
@@ -112,7 +113,16 @@ class UserAuthServices {
     };
   }
 
-  static async userGetService() {}
+  static async userGetService(user_id: ObjectId) {
+    try {
+      const user = User.findById(user_id).select("username email");
+
+      if (!user) {
+        throw new CustomError("User not found", 404);
+      }
+      return user;
+    } catch (error) {}
+  }
 
   static async userUpdateService() {}
 }

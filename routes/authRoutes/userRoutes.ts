@@ -16,6 +16,9 @@ router
 router
   .route("/userLogin")
   .post(ValidationMiddleWare.validLoginInput(), userLogin);
-router.route("/userProfile").get(getUserProfile).put(updateUserProfile);
+router
+  .route("/userProfile")
+  .get(ValidationMiddleWare.validateToken(), getUserProfile)
+  .put(ValidationMiddleWare.validateToken(), updateUserProfile);
 
 export default router;

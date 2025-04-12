@@ -1,6 +1,8 @@
+/// <reference path="../../types/express/index.d.ts" />
 import { Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
 import { CustomError } from "../../utils/customError";
+import jwt from "jsonwebtoken";
 
 // This middleware class validates the fields coming in for registration and login
 // It makes sure they are non empty along with correct format for email
@@ -82,6 +84,39 @@ class ValidationMiddleWare {
         next();
       },
     ];
+  }
+
+  /**
+   * Middleware to validate JWT token from cookies.
+   *
+   * - Retrieves the JWT token from the `token` cookie.
+   * - If token is missing, responds with a `401 Unauthorized` error.
+   * - If token is invalid or expired, responds with a `403 Forbidden` error.
+   * - If token is valid, attaches the decoded user payload to `req.user`.
+   *
+   * This middleware is typically used to protect routes that require
+   * authentication.
+   *
+   * @returns {Function} An Express middleware function for token validation.
+   */
+
+  static validateToken() {
+    return (req: Request, response: Response, next: NextFunction) => {
+      const token = req.cookies?.token;
+
+      if (!token) {
+        const error = new CustomError("No Token cookie in request", 401);
+        return next(error);
+      }
+      try {
+        const decoded = jwt.verify(token, process.env.JWT_SECRET || "sync");
+        req.user = decoded;
+        return next();
+      } catch {
+        const error = new CustomError("Invalid or Expired Token", 403);
+        return next(error);
+      }
+    };
   }
 }
 
