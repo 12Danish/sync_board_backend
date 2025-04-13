@@ -96,7 +96,7 @@ class UserAuthServices {
     });
 
     if (!user) {
-      throw new CustomError("User with this email not found", 401);
+      throw new CustomError("User with this email not found for local auth", 401);
     }
 
     // Compare passwords using bcrypt
@@ -128,7 +128,7 @@ class UserAuthServices {
    * Retrieves basic user information by ID.
    *
    * - Searches for a user in the database using the provided ObjectId.
-   * - Selects only the `username` and `email` fields for security and minimal data exposure.
+   * - Selects only the `username` , `email`, `authProvider` fields for security and minimal data exposure.
    * - If no user is found, throws a 404 error.
    *
    * @param {ObjectId} userId - The MongoDB ObjectId of the user to retrieve.
@@ -140,11 +140,11 @@ class UserAuthServices {
 
   static async userGetService(userId: ObjectId) {
     // Finding the relevant user
-    const user = User.findById(userId).select("username email");
+    const user = await User.findById(userId).select("username email authProvider");
 
     // Throwing error if user doesnt exist
-    if (!user) {
-      throw new CustomError("User not found", 404);
+    if (!user || user.authProvider !=="local" ) {
+      throw new CustomError("User not found for local auth", 404);
     }
     return user;
   }
@@ -179,32 +179,35 @@ class UserAuthServices {
     // Getting the user
     const user = await User.findById(userId);
 
+
     // Returning error if not found
-    if (!user) {
-      throw new CustomError("User not found", 404);
+    if (!user || user.authProvider !=="local") {
+      throw new CustomError("User not found for local auth.", 404);
     }
 
-    if ("oldPassword" in newData && "oldPassword" in newData) {
-      const isPasswordValid = await bcrypt.compare(
-        newData.oldPassword,
-        user.password ?? ""
-      );
-      if (isPasswordValid) {
-        const hashedPassword = await bcrypt.hash(newData.newPassword, 2);
-        user.password = hashedPassword;
-      } else {
-        throw new CustomError("Invalid Password", 401);
+   
+      if ("oldPassword" in newData && "oldPassword" in newData) {
+        const isPasswordValid = await bcrypt.compare(
+          newData.oldPassword,
+          user.password ?? ""
+        );
+        if (isPasswordValid) {
+          const hashedPassword = await bcrypt.hash(newData.newPassword, 2);
+          user.password = hashedPassword;
+        } else {
+          throw new CustomError("Invalid Password", 401);
+        }
       }
-    }
 
-    // updating the username if its available
-    if ("username" in newData && newData.username != user.username) {
-      user.username = newData.username;
-    }
+      // updating the username if its available
+      if ("username" in newData && newData.username != user.username) {
+        user.username = newData.username;
+      }
 
-    await user.save();
+      await user.save();
 
-    return user;
+      return user;
+    
   }
 }
 
