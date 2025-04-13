@@ -8,7 +8,7 @@ import jwt from "jsonwebtoken";
  * @access  Private
  *
  * @sets-cookie
- * Clears the HTTP-only cookie named `token` by setting its expiration.
+ * Clears the HTTP-only cookie named `token` by setting its expiration
  *
  * @returns
  * {
