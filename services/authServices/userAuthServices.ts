@@ -124,30 +124,7 @@ class UserAuthServices {
     };
   }
 
-  /**
-   * Retrieves basic user information by ID.
-   *
-   * - Searches for a user in the database using the provided ObjectId.
-   * - Selects only the `username` , `email`, `authProvider` fields for security and minimal data exposure.
-   * - If no user is found, throws a 404 error.
-   *
-   * @param {ObjectId} userId - The MongoDB ObjectId of the user to retrieve.
-   *
-   * @throws {CustomError} - Throws a 404 error if the user does not exist.
-   *
-   * @returns {Promise<User>} The user document with `username` and `email` fields.
-   */
 
-  static async userGetService(userId: ObjectId) {
-    // Finding the relevant user
-    const user = await User.findById(userId).select("username email authProvider");
-
-    // Throwing error if user doesnt exist
-    if (!user || user.authProvider !=="local" ) {
-      throw new CustomError("User not found for local auth", 404);
-    }
-    return user;
-  }
 
   /**
    * Updates user profile data.
