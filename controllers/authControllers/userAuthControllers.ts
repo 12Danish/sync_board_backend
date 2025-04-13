@@ -89,6 +89,28 @@ const getUserProfile = asyncHandler(async (req, res) => {
 // @desc Controller for users to get their perofile info
 // @access private
 // @route PUT api/UserProfile
-const updateUserProfile = asyncHandler(async (req, res) => {});
+const updateUserProfile = asyncHandler(async (req, res) => {
+  try {
+    const newData = req.body;
+    const decoded = req.user as jwt.JwtPayload;
+    const userId = decoded.id;
+    const updatedData = await UserAuthServices.userUpdateService({
+      userId,
+      newData,
+    });
+
+    if (updatedData) {
+       res.status(200).json(updatedData);
+    } else {
+      throw new CustomError("Error with upating", 500);
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
 
 export { userLogin, userRegister, getUserProfile, updateUserProfile };

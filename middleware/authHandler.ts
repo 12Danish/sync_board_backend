@@ -1,7 +1,7 @@
-/// <reference path="../../types/express/index.d.ts" />
+/// <reference path="../types/express/index.d.ts" />
 import { Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
-import { CustomError } from "../../utils/customError";
+import { CustomError } from "../utils/customError";
 import jwt from "jsonwebtoken";
 
 // This middleware class validates the fields coming in for registration and login
@@ -20,7 +20,7 @@ class ValidationMiddleWare {
    *
    * @returns {Array} An array of middleware functions to use in an Express route.
    */
-  static validateRegisterInput() {
+  static validateLocalRegisterInput() {
     return [
       body("username").trim().notEmpty().withMessage("Username is required"),
       body("email")
@@ -59,7 +59,7 @@ class ValidationMiddleWare {
    *
    * @returns success and sets JWT token in cookies .
    */
-  static validLoginInput() {
+  static validLocalLoginInput() {
     return [
       body("email")
         .trim()
@@ -84,6 +84,63 @@ class ValidationMiddleWare {
         next();
       },
     ];
+  }
+
+   /**
+   * Middleware for validating user update input fields.
+   *
+   * Validates that:
+   * - The request body is not empty.
+   * - Only `username`, `oldPassword`, and `newPassword` fields are allowed.
+   * - `email` field is not allowed to be updated.
+   * - Both `oldPassword` and `newPassword` must be provided together, or both must be absent.
+   *
+   * If validation fails, throws a CustomError with details.
+   *
+   * @returns {Function} function containing a single Express middleware function for validation.
+   */
+
+  static validateLocalUserUpdate() {
+    return (req: Request, res: Response, next: NextFunction) => {
+        const { body } = req;
+
+        if (!body || Object.keys(body).length === 0) {
+          return next(new CustomError("Request body is empty", 400));
+        }
+
+        const allowedFields = ["username", "oldPassword", "newPassword"];
+        const unknownFields = Object.keys(body).filter(
+          (key) => !allowedFields.includes(key)
+        );
+
+        if (unknownFields.includes("email")) {
+          return next(new CustomError("Email cannot be updated", 400));
+        }
+
+        if (unknownFields.length > 0) {
+          return next(
+            new CustomError(
+              `Invalid fields in request: ${unknownFields.join(", ")}`,
+              400
+            )
+          );
+        }
+
+        const hasOld = "oldPassword" in body;
+        const hasNew = "newPassword" in body;
+
+        if (hasOld !== hasNew) {
+          return next(
+            new CustomError(
+              "Both oldPassword and newPassword must be provided together",
+              400
+            )
+          );
+        }
+
+        next();
+      }
+    
   }
 
   /**

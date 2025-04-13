@@ -4,16 +4,27 @@ import { CustomError } from "../../utils/customError";
 import { generateToken } from "../../utils/jwtUtils";
 import { ObjectId } from "mongodb";
 
-export interface UserRegisterInput {
+interface UserRegisterInput {
   username: string;
   email: string;
   password: string;
 }
 
-export interface UserLoginInput {
+interface UserLoginInput {
   email: string;
   password: string;
 }
+
+type UserUpdateDataInput =
+  | {
+      username: string;
+    }
+  | {
+      username?: string;
+      oldPassword: string;
+      newPassword: string;
+    };
+
 class UserAuthServices {
   /**
    * Service for creating a new user.
@@ -113,18 +124,88 @@ class UserAuthServices {
     };
   }
 
-  static async userGetService(user_id: ObjectId) {
-    try {
-      const user = User.findById(user_id).select("username email");
+  /**
+   * Retrieves basic user information by ID.
+   *
+   * - Searches for a user in the database using the provided ObjectId.
+   * - Selects only the `username` and `email` fields for security and minimal data exposure.
+   * - If no user is found, throws a 404 error.
+   *
+   * @param {ObjectId} userId - The MongoDB ObjectId of the user to retrieve.
+   *
+   * @throws {CustomError} - Throws a 404 error if the user does not exist.
+   *
+   * @returns {Promise<User>} The user document with `username` and `email` fields.
+   */
 
-      if (!user) {
-        throw new CustomError("User not found", 404);
-      }
-      return user;
-    } catch (error) {}
+  static async userGetService(userId: ObjectId) {
+    // Finding the relevant user
+    const user = User.findById(userId).select("username email");
+
+    // Throwing error if user doesnt exist
+    if (!user) {
+      throw new CustomError("User not found", 404);
+    }
+    return user;
   }
 
-  static async userUpdateService() {}
+  /**
+   * Updates user profile data.
+   *
+   * - Finds the user by ID.
+   * - Throws a 404 error if the user does not exist.
+   * - If `oldPassword` and `newPassword` are provided:
+   *   - Verifies the old password using bcrypt.
+   *   - If incorrect, throws a 401 error for invalid password.
+   *   - If correct, hashes the new password and updates it.
+   * - Updates the `username` if it's different from the current one.
+   * - Saves the updated user data in the database.
+   *
+   * @param {Object} input - Object containing userId and newData.
+   * @param {ObjectId} input.userId - The MongoDB ObjectId of the user to be updated.
+   * @param {UserUpdateDataInput} input.newData - New data to be updated (username and/or password fields).
+   *
+   * @throws {CustomError} - 404 if user is not found, 401 if old password is incorrect.
+   *
+   * @returns {Promise<User>} The updated user document.
+   */
+  static async userUpdateService({
+    userId,
+    newData,
+  }: {
+    userId: ObjectId;
+    newData: UserUpdateDataInput;
+  }) {
+    // Getting the user
+    const user = await User.findById(userId);
+
+    // Returning error if not found
+    if (!user) {
+      throw new CustomError("User not found", 404);
+    }
+
+    if ("oldPassword" in newData && "oldPassword" in newData) {
+      const isPasswordValid = await bcrypt.compare(
+        newData.oldPassword,
+        user.password ?? ""
+      );
+      if (isPasswordValid) {
+        const hashedPassword = await bcrypt.hash(newData.newPassword, 2);
+        user.password = hashedPassword;
+      } else {
+        throw new CustomError("Invalid Password", 401);
+      }
+    }
+
+    // updating the username if its available
+    if ("username" in newData && newData.username != user.username) {
+      user.username = newData.username;
+    }
+
+    await user.save();
+
+    return user;
+  }
 }
 
 export { UserAuthServices };
