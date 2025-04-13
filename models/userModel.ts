@@ -7,7 +7,6 @@ export interface IUser extends Document {
   email: string;
   authProvider: "local" | "google" | "github";
   firebaseUid?: string;
-  profileImage?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -23,7 +22,7 @@ const UserSchema: Schema = new Schema(
       required: true,
     },
     firebaseUid: { type: String }, // Only for Google/GitHub via Firebase
-    profileImage: { type: String },
+   
   },
   { timestamps: true }
 );
