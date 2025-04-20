@@ -3,7 +3,6 @@ import { ValidationMiddleWare } from "../middleware/authHandler";
 import {
   getUserBoardsThumbnailData,
   getUserBoardData,
-  updateUserBoardData,
   deleteUserBoard,
   createUserBoard,
 } from "../controllers/boardControllers";

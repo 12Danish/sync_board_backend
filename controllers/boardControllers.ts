@@ -2,24 +2,80 @@ import asyncHandler from "express-async-handler";
 import Board from "../models/boardModel";
 import jwt from "jsonwebtoken";
 import { BoardCRDServices } from "../services/boadServices/cRDServices";
-//@desc Get data of boards to display on thumbnail
-//@access Private . Only for logged in users
-//@route GET/api/getBoards
+
+/**
+ * @desc    Get data of boards to display on thumbnail
+ * @route   GET /api/getBoards
+ * @access  Private Only for authenticated users
+ *
+ * @returns {Promise<Object[] | []>}
+ * An array of board objects or an empty array:
+ * [
+ *   {
+ *     "_id": "string",
+ *     "name": "string",
+ *     "thumbnail_img": "string",
+ *     "createdAt": "Date",
+ *     "updatedAt": "Date",
+ *     "security": "public" | "private",
+ *     "role": "owner" | "collaborator"
+ *   },
+ *   ...
+ * ]
+ * OR []
+ *
+ *   @errors
+ * - 500 in case of unexpected error
+ *
+ */
 const getUserBoardsThumbnailData = asyncHandler(async (req, res) => {
-  const decoded = req.user as jwt.JwtPayload;
-  const userId = decoded.id;
+  try {
+    const decoded = req.user as jwt.JwtPayload;
+    const userId = decoded.id;
 
-  const boardsThumbnailData = BoardCRDServices.getBoardThumbnailData(userId)
+    const boardsThumbnailData = BoardCRDServices.getBoardThumbnailData(userId);
 
-  res.status(200).json(boardsThumbnailData)
-
-
+    res.status(200).json(boardsThumbnailData);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
 });
 
-//@desc POST creating new board for a user
-//@access Private Only for logged in users
-//@route POST /api/createBoard
-const createUserBoard = asyncHandler(async (req, res) => {});
+/**
+ * 
+ * @desc Lets users create a new board 
+ * @route POST /api/createBoard
+ * @access Private 
+ * @body 
+ * {
+ * security : "public" | "private",
+ * name : "string"
+ * collaborators : [string]
+ * }
+ * 
+ * @returns status 201 Created 
+ * 
+ * {
+ * "message" : "board successfully created",
+ * "board_data":{
+ * "_id": "string",
+ * "name" : "string",
+ * "createdAt" : "Date",
+ * "updatedAt" : "Date",
+ * 
+ * }
+ * @errors 
+ * 500 - Unexpectd error
+ */
+const createUserBoard = asyncHandler(async (req, res) => {
+const {name, security, collaborators} = req.body;
+
+ 
+});
 
 //@desc Get specific complete data for user board
 //@access Private Only for logged in users

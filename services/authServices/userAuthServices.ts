@@ -41,27 +41,34 @@ class UserAuthServices {
    * @returns {User} instance of the newly created user.
    */
   static async userRegisterService(data: UserRegisterInput) {
-    const { username, email, password } = data;
-    // 1. Check if a user already exists with the same email and local auth
-    const existingUser = await User.findOne({
-      email: email,
-      authProvider: "local",
-    });
+    try {
+      const { username, email, password } = data;
+      // 1. Check if a user already exists with the same email and local auth
+      const existingUser = await User.findOne({
+        email: email,
+        authProvider: "local",
+      });
 
-    if (existingUser) {
-      // Throw an error or return a message
-      throw new CustomError("User already exists with this email", 409);
+      if (existingUser) {
+        // Throw an error or return a message
+        throw new CustomError("User already exists with this email", 409);
+      }
+
+      const hashedPassword = await bcrypt.hash(password, 2);
+      const newUser = await User.create({
+        username,
+        email,
+        password: hashedPassword,
+        authProvider: "local",
+      });
+
+      return newUser;
+    } catch (err) {
+      throw new CustomError(
+        `The following unexpected error occurred when trying to register custom user${err}`,
+        500
+      );
     }
-
-    const hashedPassword = await bcrypt.hash(password, 2);
-    const newUser = await User.create({
-      username,
-      email,
-      password: hashedPassword,
-      authProvider: "local",
-    });
-
-    return newUser;
   }
 
   /**
@@ -88,43 +95,54 @@ class UserAuthServices {
    * }>} An object containing the JWT token and basic user information.
    */
   static async userLoginService(data: UserLoginInput) {
-    const { email, password } = data;
-    // Find the user by email and local provider
-    const user = await User.findOne({
-      email,
-      authProvider: "local",
-    });
+    try {
+      const { email, password } = data;
+      // Find the user by email and local provider
+      const user = await User.findOne({
+        email,
+        authProvider: "local",
+      });
 
-    if (!user) {
-      throw new CustomError("User with this email not found for local auth", 401);
-    }
+      if (!user) {
+        throw new CustomError(
+          "User with this email not found for local auth",
+          401
+        );
+      }
 
-    // Compare passwords using bcrypt
-    const isPasswordValid = await bcrypt.compare(password, user.password ?? "");
+      // Compare passwords using bcrypt
+      const isPasswordValid = await bcrypt.compare(
+        password,
+        user.password ?? ""
+      );
 
-    // If user authentiation fails return
-    if (!isPasswordValid) {
-      throw new CustomError("Invalid email or password", 401);
-    }
+      // If user authentiation fails return
+      if (!isPasswordValid) {
+        throw new CustomError("Invalid email or password", 401);
+      }
 
-    const token = generateToken({
-      id: user._id,
-      email: user.email,
-      authProvider: user.authProvider,
-    });
-
-    return {
-      token,
-      user: {
+      const token = generateToken({
         id: user._id,
         email: user.email,
-        username: user.username,
         authProvider: user.authProvider,
-      },
-    };
+      });
+
+      return {
+        token,
+        user: {
+          id: user._id,
+          email: user.email,
+          username: user.username,
+          authProvider: user.authProvider,
+        },
+      };
+    } catch (err) {
+      throw new CustomError(
+        `The following unexpected error occurred when trying login custom user  ${err}`,
+        500
+      );
+    }
   }
-
-
 
   /**
    * Updates user profile data.
@@ -153,16 +171,15 @@ class UserAuthServices {
     userId: ObjectId;
     newData: UserUpdateDataInput;
   }) {
-    // Getting the user
-    const user = await User.findById(userId);
+    try {
+      // Getting the user
+      const user = await User.findById(userId);
 
+      // Returning error if not found
+      if (!user || user.authProvider !== "local") {
+        throw new CustomError("User not found for local auth.", 404);
+      }
 
-    // Returning error if not found
-    if (!user || user.authProvider !=="local") {
-      throw new CustomError("User not found for local auth.", 404);
-    }
-
-   
       if ("oldPassword" in newData && "oldPassword" in newData) {
         const isPasswordValid = await bcrypt.compare(
           newData.oldPassword,
@@ -184,7 +201,12 @@ class UserAuthServices {
       await user.save();
 
       return user;
-    
+    } catch (err) {
+      throw new CustomError(
+        `The following unexpected error occurred when trying to update custom user${err}`,
+        500
+      );
+    }
   }
 }
 

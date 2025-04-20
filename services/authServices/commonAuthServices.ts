@@ -15,22 +15,29 @@ import { CustomError } from "../../utils/customError";
  */
 
 export const userGetService = async (userId: ObjectId) => {
-  // Finding the relevant user
-  const user = await User.findById(userId);
+  try {
+    // Finding the relevant user
+    const user = await User.findById(userId);
 
-  // Throwing error if user doesnt exist
-  if (!user) {
-    throw new CustomError("User not found", 404);
+    // Throwing error if user doesnt exist
+    if (!user) {
+      throw new CustomError("User not found", 404);
+    }
+
+    let returnData: any = {
+      email: user.email,
+      authProvider: user.authProvider,
+    };
+
+    if (user.authProvider == "local") {
+      returnData.username = user.username;
+    }
+
+    return returnData;
+  } catch (err) {
+    throw new CustomError(
+      `The following unexpected error occurred when trying to get user${err}`,
+      500
+    );
   }
-
-  let returnData: any = {
-    email: user.email,
-    authProvider: user.authProvider,
-  };
-
-  if (user.authProvider == "local") {
-    returnData.username = user.username;
-  }
-
-  return returnData;
 };

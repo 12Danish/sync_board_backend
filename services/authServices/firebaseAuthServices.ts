@@ -18,44 +18,50 @@ import { generateToken } from "../../utils/jwtUtils";
  * @throws {CustomError} - Throws an error if token verification fails or if user creation fails.
  */
 export const firebaseLoginService = async (firebaseToken: string) => {
-  const decoded = await getAuth().verifyIdToken(firebaseToken);
-  const firebaseUid = decoded.uid;
-  const authProvider = decoded.firebase.sign_in_provider;
-  const email = decoded.email;
+  try {
+    const decoded = await getAuth().verifyIdToken(firebaseToken);
+    const firebaseUid = decoded.uid;
+    const authProvider = decoded.firebase.sign_in_provider;
+    const email = decoded.email;
 
-  if (authProvider !== "google" && authProvider !== "github") {
-    throw new CustomError("Unsupported auth provider", 400);
-  }
-
-  let user = await User.findOne({ firebaseUid });
-
-  if (!user) {
-    try {
-      user = await User.create({
-        email,
-        authProvider,
-        firebaseUid,
-      });
-    } catch (error) {
-      throw new CustomError(
-        `The following error occurred while trying to create user with firebase: ${error}`,
-        500
-      );
+    if (authProvider !== "google" && authProvider !== "github") {
+      throw new CustomError("Unsupported auth provider", 400);
     }
-  }
 
-  const token = generateToken({
-    id: user._id,
-    email: user.email,
-    authProvider: user.authProvider,
-  });
+    let user = await User.findOne({ firebaseUid });
 
-  return {
-    token,
-    user: {
+    if (!user) {
+      try {
+        user = await User.create({
+          email,
+          authProvider,
+          firebaseUid,
+        });
+      } catch (error) {
+        throw new CustomError(
+          `The following error occurred while trying to create user with firebase: ${error}`,
+          500
+        );
+      }
+    }
+    const token = generateToken({
       id: user._id,
       email: user.email,
       authProvider: user.authProvider,
-    },
-  };
+    });
+
+    return {
+      token,
+      user: {
+        id: user._id,
+        email: user.email,
+        authProvider: user.authProvider,
+      },
+    };
+  } catch (err) {
+    throw new CustomError(
+      `The following unexpected error occurred when trying to login firebase user${err}`,
+      500
+    );
+  }
 };
