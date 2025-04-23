@@ -1,7 +1,7 @@
 import asyncHandler from "express-async-handler";
 import Board from "../models/boardModel";
 import jwt from "jsonwebtoken";
-import { BoardCRDServices } from "../services/boadServices/cRDServices";
+import { BoardCRDServices } from "../services/boardServices/cRDServices";
 
 /**
  * @desc    Get data of boards to display on thumbnail
@@ -33,7 +33,7 @@ const getUserBoardsThumbnailData = asyncHandler(async (req, res) => {
     const decoded = req.user as jwt.JwtPayload;
     const userId = decoded.id;
 
-    const boardsThumbnailData = BoardCRDServices.getBoardThumbnailData(userId);
+    const boardsThumbnailData = await BoardCRDServices.getBoardThumbnailData(userId);
 
     res.status(200).json(boardsThumbnailData);
   } catch (err: unknown) {
@@ -46,19 +46,19 @@ const getUserBoardsThumbnailData = asyncHandler(async (req, res) => {
 });
 
 /**
- * 
- * @desc Lets users create a new board 
+ *
+ * @desc Lets users create a new board
  * @route POST /api/createBoard
- * @access Private 
- * @body 
+ * @access Private
+ * @body
  * {
  * security : "public" | "private",
  * name : "string"
  * collaborators : [string]
  * }
- * 
- * @returns status 201 Created 
- * 
+ *
+ * @returns status 201 Created
+ *
  * {
  * "message" : "board successfully created",
  * "board_data":{
@@ -66,15 +66,30 @@ const getUserBoardsThumbnailData = asyncHandler(async (req, res) => {
  * "name" : "string",
  * "createdAt" : "Date",
  * "updatedAt" : "Date",
- * 
+ *
  * }
- * @errors 
+ * @errors
  * 500 - Unexpectd error
  */
 const createUserBoard = asyncHandler(async (req, res) => {
-const {name, security, collaborators} = req.body;
-
- 
+  try {
+    const decoded = req.user as jwt.JwtPayload;
+    const userId = decoded.id;
+    const { name, security, collaborators } = req.body;
+    const newBoard = await BoardCRDServices.createBoard({
+      name,
+      security,
+      owner: userId,
+      collaborators,
+    });
+    res.status(201).json(newBoard);
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
 });
 
 //@desc Get specific complete data for user board

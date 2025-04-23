@@ -30,5 +30,8 @@ const BoardSchema: Schema = new Schema(
   { timestamps: true } // Allows to automatically fill time fields
 );
 
+// Compound unique index to prevent duplicate board names per user
+BoardSchema.index({ createdBy: 1, name: 1 }, { unique: true });
+
 const Board = mongoose.model<IBoard>("Board", BoardSchema);
 export default Board;
