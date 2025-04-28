@@ -60,6 +60,32 @@ class BoardMiddleware {
       },
     ];
   }
+
+  /**
+ * Middleware for validating the presence of a board ID in the request parameters.
+ *
+ * Validates that:
+ * - The `id` parameter exists in the URL (i.e., `req.params["id"]`).
+ * 
+ * If the `id` parameter is missing, a `CustomError` is thrown with a `400` status code and a message 
+ * indicating that the "Board id is needed".
+ * 
+ * If the `id` parameter is present, the request proceeds to the next middleware or route handler.
+ *
+ * @returns Express middleware array for checking if the `id` parameter exists in the request URL.
+ */
+  static checkIdInParam() {
+    return [
+      (req: Request, res: Response, next: NextFunction) => {
+        if (!req.params["id"]) {
+          const error = new CustomError("Board id is needed", 400);
+          return next(error);
+        }
+
+        next();
+      },
+    ];
+  }
 }
 
 export { BoardMiddleware };

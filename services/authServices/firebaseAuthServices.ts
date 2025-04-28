@@ -58,7 +58,12 @@ export const firebaseLoginService = async (firebaseToken: string) => {
         authProvider: user.authProvider,
       },
     };
-  } catch (err) {
+  } catch (err: any) {
+    // If the error is already a CustomError, rethrow it
+    if (err instanceof CustomError) {
+      throw err;
+    }
+
     throw new CustomError(
       `The following unexpected error occurred when trying to login firebase user${err}`,
       500

@@ -7,14 +7,14 @@ import { CustomError } from "../../utils/customError";
  * - Searches for a user in the database using the provided ObjectId.
  * - If no user is found, throws a 404 error.
  *
- * @param {ObjectId} userId - The MongoDB ObjectId of the user to retrieve.
+ * @param {ObjectId | string} userId - The MongoDB ObjectId of the user to retrieve.
  *
  * @throws {CustomError} - Throws a 404 error if the user does not exist.
  *
  * @returns {Promise<User>} The user document with `username` and `email` fields.
  */
 
-export const userGetService = async (userId: ObjectId) => {
+export const userGetService = async (userId: ObjectId | string) => {
   try {
     // Finding the relevant user
     const user = await User.findById(userId);
@@ -34,7 +34,12 @@ export const userGetService = async (userId: ObjectId) => {
     }
 
     return returnData;
-  } catch (err) {
+  } catch (err:any) {
+    // If the error is already a CustomError, rethrow it
+          if (err instanceof CustomError) {
+            throw err;
+          }
+      
     throw new CustomError(
       `The following unexpected error occurred when trying to get user${err}`,
       500

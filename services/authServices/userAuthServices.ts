@@ -63,7 +63,12 @@ class UserAuthServices {
       });
 
       return newUser;
-    } catch (err) {
+    } catch (err: any) {
+      // If the error is already a CustomError, rethrow it
+      if (err instanceof CustomError) {
+        throw err;
+      }
+
       throw new CustomError(
         `The following unexpected error occurred when trying to register custom user${err}`,
         500
@@ -136,7 +141,12 @@ class UserAuthServices {
           authProvider: user.authProvider,
         },
       };
-    } catch (err) {
+    } catch (err: any) {
+      // If the error is already a CustomError, rethrow it
+      if (err instanceof CustomError) {
+        throw err;
+      }
+
       throw new CustomError(
         `The following unexpected error occurred when trying login custom user  ${err}`,
         500
@@ -157,7 +167,7 @@ class UserAuthServices {
    * - Saves the updated user data in the database.
    *
    * @param {Object} input - Object containing userId and newData.
-   * @param {ObjectId} input.userId - The MongoDB ObjectId of the user to be updated.
+   * @param {ObjectId | string } input.userId - The MongoDB ObjectId of the user to be updated.
    * @param {UserUpdateDataInput} input.newData - New data to be updated (username and/or password fields).
    *
    * @throws {CustomError} - 404 if user is not found, 401 if old password is incorrect.
@@ -168,7 +178,7 @@ class UserAuthServices {
     userId,
     newData,
   }: {
-    userId: ObjectId;
+    userId: ObjectId | string;
     newData: UserUpdateDataInput;
   }) {
     try {
@@ -201,7 +211,12 @@ class UserAuthServices {
       await user.save();
 
       return user;
-    } catch (err) {
+    } catch (err: any) {
+      // If the error is already a CustomError, rethrow it
+      if (err instanceof CustomError) {
+        throw err;
+      }
+
       throw new CustomError(
         `The following unexpected error occurred when trying to update custom user${err}`,
         500
