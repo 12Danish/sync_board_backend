@@ -13,6 +13,11 @@ interface delAndGetBoardServiceInput {
   userId: ObjectId | string;
   boardId: string;
 }
+
+interface searchBoardServiceInput {
+  userId: ObjectId | string;
+  boardName: string;
+}
 class BoardCRDServices {
   /**
    * Retrieves board thumbnail data for a specific user.
@@ -229,6 +234,55 @@ class BoardCRDServices {
       // Generic error handler
       throw new CustomError(
         `The following error occurred while trying to get the specified board: ${
+          err.message || err
+        }`,
+        500
+      );
+    }
+  }
+
+  /**
+   * Searches for boards with the specified name that the requesting user can access.
+   *
+   * - Filters boards by the provided `boardName`.
+   * - Ensures the board is accessible by checking if the requesting user (identified by `userId`)
+   *   is either the creator (`createdBy`) or listed as a collaborator (`collaborators`).
+   * - Returns all matching boards accessible to the user.
+   *
+   * @param { {
+   *   boardName: string,
+   *   userId: ObjectId | string
+   * } } data - Object containing the board name to search for and the user ID requesting access.
+   *
+   * @throws {CustomError} 404 if no boards matching the criteria are found for the user.
+   * @throws {CustomError} 500 for any other internal error.
+   *
+   * @returns {IBoard[]} Returns an array of board documents that match the name and are accessible to the user.
+   */
+  static async searchBoardService(data: searchBoardServiceInput) {
+    try {
+      const boards = await Board.find({
+        name: { $regex: data.boardName, $options: "i" }, // this makes sure to search if the entered value is part of a longer name(case insensitive)
+        $or: [{ createdBy: data.userId }, { collaborators: data.userId }],
+      });
+
+      if (!boards) {
+        throw new CustomError(
+          "No board with the requested name exists for the current user!",
+          404
+        );
+      }
+
+      return boards;
+    } catch (err: any) {
+      // If the error is already a CustomError, rethrow it
+      if (err instanceof CustomError) {
+        throw err;
+      }
+
+      // Generic error handler
+      throw new CustomError(
+        `The following error occurred while trying to search the board: ${
           err.message || err
         }`,
         500

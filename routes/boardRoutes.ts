@@ -3,6 +3,7 @@ import { ValidationMiddleWare } from "../middleware/authHandler";
 import {
   getUserBoardsThumbnailData,
   getUserBoardData,
+  searchUserBoard,
   deleteUserBoard,
   createUserBoard,
 } from "../controllers/boardControllers";
@@ -231,5 +232,78 @@ router
     BoardMiddleware.checkIdInParam(),
     deleteUserBoard
   );
+
+/**
+ * @swagger
+ * /api/board/search/{name}:
+ *   get:
+ *     summary: Search for boards by name that the authenticated user has access to
+ *     description: Returns a list of boards that match the given name and where the user is either the creator or a collaborator.
+ *     tags:
+ *       - Boards
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: name
+ *         in: path
+ *         required: true
+ *         description: The name of the board(s) to search for.
+ *         schema:
+ *           type: string
+ *     responses:
+ *       200:
+ *         description: Matching board(s) retrieved successfully.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                     example: "64f9c25adf1f5d3a1c3345c9"
+ *                   name:
+ *                     type: string
+ *                     example: "Marketing Roadmap"
+ *                   createdBy:
+ *                     type: string
+ *                     example: "64f8d33a1f5c5e2d8b3f3c92"
+ *                   collaborators:
+ *                     type: array
+ *                     items:
+ *                       type: string
+ *                     example: ["64f8d33a1f5c5e2d8b3f3c92", "64f9c25adf1f5d3a1c3345c9"]
+ *                   shapes:
+ *                     type: array
+ *                     items:
+ *                       type: object
+ *                     example: [{ "type": "rectangle", "position": { "x": 10, "y": 20 } }]
+ *                   thumbnail_img:
+ *                     type: string
+ *                     example: "https://example.com/thumbnail.jpg"
+ *                   security:
+ *                     type: string
+ *                     enum: [public, private]
+ *                     example: "private"
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-07-14T12:00:00Z"
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *                     example: "2024-07-15T15:30:00Z"
+ *       403:
+ *         description: Forbidden - User token is missing or invalid.
+ *       404:
+ *         description: Not Found - No boards with the given name accessible by the user.
+ *       500:
+ *         description: Unexpected server error during the search.
+ */
+
+router
+  .route("/board/search/:name")
+  .get(ValidationMiddleWare.validateToken(), searchUserBoard);
 
 export default router;

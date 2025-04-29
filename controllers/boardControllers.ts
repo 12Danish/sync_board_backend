@@ -176,16 +176,52 @@ const getUserBoardData = asyncHandler(async (req, res) => {
   }
 });
 
-//@desc PUT specific update specific board
-//@access Private Only for logged in users
-//@route PUT /api/board:id
-const updateUserBoardData = asyncHandler(async (req, res) => {});
+/**
+ *
+ * @desc Retrieves all boards matching the provided name that the authenticated user has access to.
+ * @route GET /api/board/search/:name
+ * @access Private
+ * @param {string} name - The name of the board(s) to search for (from URL params)
+ *
+ * @returns status 200 OK
+ * [
+ *   { ...board1 details... },
+ *   { ...board2 details... }
+ * ]
+ *
+ * @errors
+ * 403 - Unauthorized: User token missing or invalid
+ * 404 - No boards found with the specified name accessible by the user
+ * 500 - Unexpected error during board search
+ */
+const searchUserBoard = asyncHandler(async (req, res) => {
+  try {
+    const decoded = req.user as jwt.JwtPayload;
+    const userId = decoded.id;
+
+    const boardName = req.params["name"];
+    const boardsData = await BoardCRDServices.searchBoardService({
+      boardName,
+      userId,
+    });
+
+    if (boardsData) {
+      res.status(200).json(boardsData);
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
 
 // Use export instead of module.exports
 export {
-  updateUserBoardData,
   getUserBoardsThumbnailData,
   getUserBoardData,
   createUserBoard,
   deleteUserBoard,
+  searchUserBoard,
 };
