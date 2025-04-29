@@ -74,4 +74,7 @@ router
 router
   .route("/userProfile")
   .get(ValidationMiddleWare.validateToken(), getUserProfile);
+
+
+router.route("/user/search/")
 export default router;

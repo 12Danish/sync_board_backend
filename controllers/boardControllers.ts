@@ -181,7 +181,7 @@ const getUserBoardData = asyncHandler(async (req, res) => {
  * @desc Retrieves all boards matching the provided name that the authenticated user has access to.
  * @route GET /api/board/search/:name
  * @access Private
- * @param {string} name - The name of the board(s) to search for (from URL params)
+ * @queryParam {string} name - The name of the board(s) to search for (from URL params)
  *
  * @returns status 200 OK
  * [
@@ -199,7 +199,8 @@ const searchUserBoard = asyncHandler(async (req, res) => {
     const decoded = req.user as jwt.JwtPayload;
     const userId = decoded.id;
 
-    const boardName = req.params["name"];
+    const boardName = req.query.name as string;
+
     const boardsData = await BoardCRDServices.searchBoardService({
       boardName,
       userId,

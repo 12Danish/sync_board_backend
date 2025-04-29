@@ -62,18 +62,18 @@ class BoardMiddleware {
   }
 
   /**
- * Middleware for validating the presence of a board ID in the request parameters.
- *
- * Validates that:
- * - The `id` parameter exists in the URL (i.e., `req.params["id"]`).
- * 
- * If the `id` parameter is missing, a `CustomError` is thrown with a `400` status code and a message 
- * indicating that the "Board id is needed".
- * 
- * If the `id` parameter is present, the request proceeds to the next middleware or route handler.
- *
- * @returns Express middleware array for checking if the `id` parameter exists in the request URL.
- */
+   * Middleware for validating the presence of a board ID in the request parameters.
+   *
+   * Validates that:
+   * - The `id` parameter exists in the URL (i.e., `req.params["id"]`).
+   *
+   * If the `id` parameter is missing, a `CustomError` is thrown with a `400` status code and a message
+   * indicating that the "Board id is needed".
+   *
+   * If the `id` parameter is present, the request proceeds to the next middleware or route handler.
+   *
+   * @returns Express middleware array for checking if the `id` parameter exists in the request URL.
+   */
   static checkIdInParam() {
     return [
       (req: Request, res: Response, next: NextFunction) => {
@@ -82,6 +82,36 @@ class BoardMiddleware {
           return next(error);
         }
 
+        next();
+      },
+    ];
+  }
+
+  /**
+   * Middleware for validating the presence of a `name` query parameter in the request URL.
+   *
+   * Validates that:
+   * - The `name` query parameter exists in the URL (i.e., `req.query["name"]`).
+   *
+   * If the `name` query parameter is missing, a `CustomError` is thrown with a `400` status code and a message
+   * indicating that the "`name` query parameter for the board" must be included.
+   *
+   * If the `name` parameter is present, the request proceeds to the next middleware or route handler.
+   *
+   * @returns Express middleware array for checking if the `name` query parameter exists in the request URL.
+   */
+  static checkNameInQueryParam() {
+    return [
+      (req: Request, res: Response, next: NextFunction) => {
+        const name = req.query.name;
+        if (!name || (typeof name === "string" && name.trim() === "")) {
+          return next(
+            new CustomError(
+              "Please include a non-empty `name` query parameter for the board",
+              400
+            )
+          );
+        }
         next();
       },
     ];
