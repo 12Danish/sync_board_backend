@@ -3,6 +3,7 @@ import express, { Router } from "express";
 import {
   userLogout,
   getUserProfile,
+  searchUser,
 } from "../../controllers/authControllers/commonAuthControllers";
 import { ValidationMiddleWare } from "../../middleware/authHandler";
 const router: Router = express.Router();
@@ -75,6 +76,62 @@ router
   .route("/userProfile")
   .get(ValidationMiddleWare.validateToken(), getUserProfile);
 
+/**
+ * @swagger
+ * /api/user/search:
+ *   get:
+ *     summary: Search for users using partial username or email
+ *     tags: [User]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: query
+ *         name: username
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Partial or full username to search for
+ *       - in: query
+ *         name: email
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: Partial or full email address to search for
+ *     responses:
+ *       200:
+ *         description: List of matching users
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: array
+ *               items:
+ *                 type: object
+ *                 properties:
+ *                   _id:
+ *                     type: string
+ *                   username:
+ *                     type: string
+ *                   email:
+ *                     type: string
+ *                   createdAt:
+ *                     type: string
+ *                     format: date-time
+ *                   updatedAt:
+ *                     type: string
+ *                     format: date-time
+ *       400:
+ *         description: Missing or invalid query parameters (username or email required)
+ *       404:
+ *         description: No matching users found
+ *       500:
+ *         description: Internal server error
+ */
 
-router.route("/user/search/")
+router
+  .route("/user/search/")
+  .get(
+    ValidationMiddleWare.validateToken(),
+    ValidationMiddleWare.checkEmailOrUsernameInQueryParam(),
+    searchUser
+  );
 export default router;

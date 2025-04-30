@@ -1,6 +1,9 @@
 import asyncHandler from "express-async-handler";
 import { CustomError } from "../../utils/customError";
-import { userGetService } from "../../services/authServices/commonAuthServices";
+import {
+  searchUserService,
+  userGetService,
+} from "../../services/authServices/commonAuthServices";
 import jwt from "jsonwebtoken";
 /**
  * @desc    Logout user by clearing the authentication token cookie
@@ -79,4 +82,24 @@ const getUserProfile = asyncHandler(async (req, res) => {
   }
 });
 
-export { userLogout, getUserProfile };
+const searchUser = asyncHandler(async (req, res) => {
+  try {
+    const username =
+      typeof req.query.username === "string" ? req.query.username : null;
+    const email = typeof req.query.email === "string" ? req.query.email : null;
+
+    const searchedUsers = await searchUserService({ username, email });
+
+    if (searchedUsers) {
+      res.status(200).json(searchedUsers);
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
+
+export { userLogout, getUserProfile, searchUser };

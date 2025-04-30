@@ -86,7 +86,7 @@ class ValidationMiddleWare {
     ];
   }
 
-   /**
+  /**
    * Middleware for validating user update input fields.
    *
    * Validates that:
@@ -102,45 +102,44 @@ class ValidationMiddleWare {
 
   static validateLocalUserUpdate() {
     return (req: Request, res: Response, next: NextFunction) => {
-        const { body } = req;
+      const { body } = req;
 
-        if (!body || Object.keys(body).length === 0) {
-          return next(new CustomError("Request body is empty", 400));
-        }
-
-        const allowedFields = ["username", "oldPassword", "newPassword"];
-        const unknownFields = Object.keys(body).filter(
-          (key) => !allowedFields.includes(key)
-        );
-
-        if (unknownFields.includes("email")) {
-          return next(new CustomError("Email cannot be updated", 400));
-        }
-
-        if (unknownFields.length > 0) {
-          return next(
-            new CustomError(
-              `Invalid fields in request: ${unknownFields.join(", ")}`,
-              400
-            )
-          );
-        }
-
-        const hasOld = "oldPassword" in body;
-        const hasNew = "newPassword" in body;
-
-        if (hasOld !== hasNew) {
-          return next(
-            new CustomError(
-              "Both oldPassword and newPassword must be provided together",
-              400
-            )
-          );
-        }
-
-        next();
+      if (!body || Object.keys(body).length === 0) {
+        return next(new CustomError("Request body is empty", 400));
       }
-    
+
+      const allowedFields = ["username", "oldPassword", "newPassword"];
+      const unknownFields = Object.keys(body).filter(
+        (key) => !allowedFields.includes(key)
+      );
+
+      if (unknownFields.includes("email")) {
+        return next(new CustomError("Email cannot be updated", 400));
+      }
+
+      if (unknownFields.length > 0) {
+        return next(
+          new CustomError(
+            `Invalid fields in request: ${unknownFields.join(", ")}`,
+            400
+          )
+        );
+      }
+
+      const hasOld = "oldPassword" in body;
+      const hasNew = "newPassword" in body;
+
+      if (hasOld !== hasNew) {
+        return next(
+          new CustomError(
+            "Both oldPassword and newPassword must be provided together",
+            400
+          )
+        );
+      }
+
+      next();
+    };
   }
 
   /**
@@ -174,6 +173,58 @@ class ValidationMiddleWare {
         return next(error);
       }
     };
+  }
+
+  /**
+   * Middleware to validate that either a non-empty `username` or a valid `email`
+   * query parameter is present in the request.
+   *
+   * - Ensures that at least one of `username` or `email` is provided as a non-empty string.
+   * - If both are missing or empty, responds with a `400 Bad Request` error.
+   * - If `email` is provided, checks that it is in a valid email format.
+   * - If the email format is invalid, responds with a `400 Bad Request` error.
+   *
+   * This middleware is typically used to validate user search queries in GET routes,
+   * ensuring that a valid identifier is present for user lookup.
+   *
+   * @returns {Function[]} An array containing an Express middleware function.
+   */
+
+  static checkEmailOrUsernameInQueryParam() {
+    return [
+      (req: Request, res: Response, next: NextFunction) => {
+        const username = req.query.username;
+        const email = req.query.email;
+
+        const isNonEmptyString = (value: unknown) =>
+          typeof value === "string" && value.trim() !== "";
+
+        const isValidEmail = (value: string) =>
+          /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value);
+
+        // Ensure at least one of username or email is provided
+        if (!isNonEmptyString(email) && !isNonEmptyString(username)) {
+          return next(
+            new CustomError(
+              "Please include a non-empty `username` or `email` query parameter for the user",
+              400
+            )
+          );
+        }
+
+        // If email is provided, validate its format
+        if (isNonEmptyString(email) && !isValidEmail(email as string)) {
+          return next(
+            new CustomError(
+              "Provided email is not in a valid format (e.g., john.doe@example.com)",
+              400
+            )
+          );
+        }
+
+        next();
+      },
+    ];
   }
 }
 

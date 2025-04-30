@@ -31,7 +31,6 @@ const UserSchema: Schema = new Schema(
 UserSchema.methods.toJSON = function () {
   const obj = this.toObject();
   delete obj.password; // Remove password from the response
-  delete obj._id; // Remove _id from the response
   delete obj.__v; // Remove __v from the response
   return obj;
 };
