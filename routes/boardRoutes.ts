@@ -58,7 +58,6 @@ const router: Router = express.Router();
 router
   .route("/getBoards")
   .get(ValidationMiddleWare.validateToken(), getUserBoardsThumbnailData);
-
 /**
  * @swagger
  * /api/createBoard:
@@ -101,7 +100,8 @@ router
  *                       enum: [view, edit]
  *                       description: The permission level for the collaborator.
  *                       example: "view"
- *         responses:      201:
+ *     responses:
+ *       201:
  *         description: Board successfully created.
  *         content:
  *           application/json:
@@ -142,7 +142,7 @@ router
  *       - Boards
  *     security:
  *       - bearerAuth: []
- *     query-parameters:
+ *     parameters:
  *       - name: name
  *         in: path
  *         required: true
@@ -173,7 +173,7 @@ router
  *                     items:
  *                       type: string
  *                     example: ["64f8d33a1f5c5e2d8b3f3c92", "64f9c25adf1f5d3a1c3345c9"]
- *                   * thumbnail_img:
+ *                   thumbnail_img:
  *                     type: string
  *                     example: "https://example.com/thumbnail.jpg"
  *                   security:
@@ -218,7 +218,7 @@ router
  *       - name: id
  *         in: path
  *         required: true
- *         description: The ID of the board to which the collaborator will be added.
+ *         description: The ID of the board
  *         schema:
  *           type: string
  *     requestBody:
@@ -241,18 +241,22 @@ router
  *     responses:
  *       201:
  *         description: Collaborator successfully added.
- *       403:
- *         description: Forbidden - Only the owner can add collaborators.
- *       404:
- *         description: Board not found or user not found.
  *       400:
- *         description: Bad Request - Validation errors in request body.
+ *         description: Bad request.
+ *       403:
+ *         description: Forbidden.
+ *       404:
+ *         description: Not found.
  *       500:
- *         description: Internal server error while adding collaborator.
- *
+ *         description: Server error.
+ */
+
+/**
+ * @swagger
+ * /api/board/{id}/collaborator:
  *   delete:
  *     summary: Remove a collaborator from a board
- *     description: Removes a user from the list of collaborators on a board. Only the board owner can perform this action.
+ *     description: Removes a user from the board collaborators. Only the board owner can do this.
  *     tags:
  *       - Boards
  *     security:
@@ -261,7 +265,7 @@ router
  *       - name: id
  *         in: path
  *         required: true
- *         description: The ID of the board from which the collaborator will be removed.
+ *         description: The ID of the board
  *         schema:
  *           type: string
  *     requestBody:
@@ -279,26 +283,26 @@ router
  *     responses:
  *       200:
  *         description: Collaborator successfully removed.
- *       403:
- *         description: Forbidden - Only the owner can remove collaborators.
- *       404:
- *         description: Board not found or user is not a collaborator.
  *       400:
- *         description: Bad Request - Validation errors in request body.
+ *         description: Bad request.
+ *       403:
+ *         description: Forbidden.
+ *       404:
+ *         description: Not found.
  *       500:
- *         description: Internal server error while removing collaborator.
+ *         description: Server error.
  */
-
 router
   .route("/board/:id/collaborator")
   .post(
     ValidationMiddleWare.validateToken(),
-    BoardMiddleware.checkUserIdAndPermissionInBody(),
+    BoardMiddleware.checkUserIdInBody(),
+    BoardMiddleware.checkPermissionInBody(),
     addCollaborator
   )
   .delete(
     ValidationMiddleWare.validateToken(),
-    BoardMiddleware.checkUserIdAndPermissionInBody(),
+    BoardMiddleware.checkUserIdInBody(),
     deleteCollaborator
   );
 /**

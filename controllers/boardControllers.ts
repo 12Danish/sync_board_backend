@@ -242,8 +242,8 @@ const addCollaborator = asyncHandler(async (req, res) => {
   try {
     const decoded = req.user as jwt.JwtPayload;
     const currentUserId = decoded.id;
-    const targetUserId = req.body("targetUserId");
-    const permission = req.body("permission");
+    const { targetUserId, permission } = req.body;
+
     const boardId = req.params["id"];
 
     const added = await BoardCRDServices.addCollaboratorService({
@@ -287,7 +287,7 @@ const deleteCollaborator = asyncHandler(async (req, res) => {
   try {
     const decoded = req.user as jwt.JwtPayload;
     const currentUserId = decoded.id;
-    const targetUserId = req.body("targetUserId");
+    const { targetUserId } = req.body;
     const boardId = req.params["id"];
 
     const deleted = await BoardCRDServices.deleteCollaboratorService({

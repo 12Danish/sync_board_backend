@@ -66,6 +66,7 @@ class BoardCRDServices {
           board.createdBy.toString() === userId.toString()
             ? "owner"
             : "collaborator",
+            
       }));
 
       return boardThumbnails;
@@ -238,11 +239,15 @@ class BoardCRDServices {
           (collab: any) => collab.user.toString() === data.userId.toString()
         );
         if (
-          selBoard.createdBy.toString() === data.userId.toString() ||
+          selBoard.createdBy._id.toString() === data.userId.toString() ||
           isCollaborator
         ) {
           return selBoard;
         } else {
+          console.log("This is the createdBy");
+          console.log(selBoard.createdBy.toString());
+          console.log("This is input");
+          console.log(data.userId.toString());
           throw new CustomError("You do not have permission to view this", 403);
         }
       }
