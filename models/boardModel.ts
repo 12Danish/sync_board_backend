@@ -1,13 +1,16 @@
 import mongoose, { Schema, Document } from "mongoose";
 
-
+export interface ICollaborator {
+  user: mongoose.Types.ObjectId;
+  permission: "view" | "edit";
+}
 // Define the TypeScript Interface
 export interface IBoard extends Document {
   name: string;
   createdAt: Date;
   updatedAt: Date;
-  createdBy:string;
-  collaborators: string[]; // Array of user IDs or emails
+  createdBy: mongoose.Types.ObjectId;
+  collaborators: ICollaborator[]; // Array of user IDs or emails
   thumbnail_img: string;
   shapes: { [key: string]: any }[]; // Array of flexible objects (dynamic)
   security: "public" | "private";
@@ -15,10 +18,18 @@ export interface IBoard extends Document {
 
 const BoardSchema: Schema = new Schema(
   {
-
     name: { type: String, required: true },
     createdBy: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    collaborators: [{ type: Schema.Types.ObjectId, ref: "User" }],
+    collaborators: [
+      {
+        user: { type: Schema.Types.ObjectId, ref: "User", required: true },
+        permission: {
+          type: String,
+          enum: ["view", "edit"],
+          required: true,
+        },
+      },
+    ],
     shapes: { type: [Schema.Types.Mixed], default: [] },
     thumbnail_img: { type: String, default: "" },
     security: {

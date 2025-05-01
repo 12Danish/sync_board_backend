@@ -116,6 +116,47 @@ class BoardMiddleware {
       },
     ];
   }
+
+  /**
+ * Middleware for validating the request body when adding a collaborator to a board.
+ *
+ * Validates that:
+ * - `targetUserId` is present and not empty in the request body.
+ * - `permission` is present, not empty, and must be either `"edit"` or `"view"`.
+ *
+ * If validation fails, a `CustomError` is thrown with a `400` status code, and an array of validation errors is included.
+ * If validation passes, the request proceeds to the next middleware or route handler.
+ *
+ * @returns Express middleware array for validating `targetUserId` and `permission` in the request body.
+ */
+
+  static checkUserIdAndPermissionInBody() {
+    return [
+      body("targetUserId")
+        .trim()
+        .notEmpty()
+        .withMessage("Target User id is needed"),
+      body("permission")
+        .trim()
+        .notEmpty()
+        .withMessage("Collaborator permission must be set")
+        .isIn(["edit", "view"])
+        .withMessage("Permission must be either 'edit' or 'view'"),
+      (req: Request, res: Response, next: NextFunction) => {
+        const errors = validationResult(req);
+
+        if (!errors.isEmpty()) {
+          const error = new CustomError(
+            "Error with the input received",
+            400,
+            errors.array()
+          );
+          return next(error);
+        }
+        next();
+      },
+    ];
+  }
 }
 
 export { BoardMiddleware };

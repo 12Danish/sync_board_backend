@@ -6,6 +6,8 @@ import {
   searchUserBoard,
   deleteUserBoard,
   createUserBoard,
+  addCollaborator,
+  deleteCollaborator,
 } from "../controllers/boardControllers";
 import { BoardMiddleware } from "../middleware/boardHandler";
 const router: Router = express.Router();
@@ -85,9 +87,21 @@ router
  *               collaborators:
  *                 type: array
  *                 items:
- *                   type: string
- *     responses:
- *       201:
+ *                   type: object
+ *                   required:
+ *                     - user
+ *                     - permission
+ *                   properties:
+ *                     user:
+ *                       type: string
+ *                       description: The ObjectId of the user (collaborator).
+ *                       example: "60d5f89d8f3b5c5a98a8d4b2"
+ *                     permission:
+ *                       type: string
+ *                       enum: [view, edit]
+ *                       description: The permission level for the collaborator.
+ *                       example: "view"
+ *         responses:      201:
  *         description: Board successfully created.
  *         content:
  *           application/json:
@@ -159,12 +173,7 @@ router
  *                     items:
  *                       type: string
  *                     example: ["64f8d33a1f5c5e2d8b3f3c92", "64f9c25adf1f5d3a1c3345c9"]
- *                   shapes:
- *                     type: array
- *                     items:
- *                       type: object
- *                     example: [{ "type": "rectangle", "position": { "x": 10, "y": 20 } }]
- *                   thumbnail_img:
+ *                   * thumbnail_img:
  *                     type: string
  *                     example: "https://example.com/thumbnail.jpg"
  *                   security:
@@ -195,6 +204,103 @@ router
     searchUserBoard
   );
 
+/**
+ * @swagger
+ * /api/board/{id}/collaborator:
+ *   post:
+ *     summary: Add a collaborator to a board
+ *     description: Adds a user as a collaborator with specified permission ("edit" or "view") to a board. Only the board owner can perform this action.
+ *     tags:
+ *       - Boards
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the board to which the collaborator will be added.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - targetUserId
+ *               - permission
+ *             properties:
+ *               targetUserId:
+ *                 type: string
+ *                 example: "64f8d33a1f5c5e2d8b3f3c92"
+ *               permission:
+ *                 type: string
+ *                 enum: [edit, view]
+ *                 example: "edit"
+ *     responses:
+ *       201:
+ *         description: Collaborator successfully added.
+ *       403:
+ *         description: Forbidden - Only the owner can add collaborators.
+ *       404:
+ *         description: Board not found or user not found.
+ *       400:
+ *         description: Bad Request - Validation errors in request body.
+ *       500:
+ *         description: Internal server error while adding collaborator.
+ *
+ *   delete:
+ *     summary: Remove a collaborator from a board
+ *     description: Removes a user from the list of collaborators on a board. Only the board owner can perform this action.
+ *     tags:
+ *       - Boards
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - name: id
+ *         in: path
+ *         required: true
+ *         description: The ID of the board from which the collaborator will be removed.
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - targetUserId
+ *             properties:
+ *               targetUserId:
+ *                 type: string
+ *                 example: "64f8d33a1f5c5e2d8b3f3c92"
+ *     responses:
+ *       200:
+ *         description: Collaborator successfully removed.
+ *       403:
+ *         description: Forbidden - Only the owner can remove collaborators.
+ *       404:
+ *         description: Board not found or user is not a collaborator.
+ *       400:
+ *         description: Bad Request - Validation errors in request body.
+ *       500:
+ *         description: Internal server error while removing collaborator.
+ */
+
+router
+  .route("/board/:id/collaborator")
+  .post(
+    ValidationMiddleWare.validateToken(),
+    BoardMiddleware.checkUserIdAndPermissionInBody(),
+    addCollaborator
+  )
+  .delete(
+    ValidationMiddleWare.validateToken(),
+    BoardMiddleware.checkUserIdAndPermissionInBody(),
+    deleteCollaborator
+  );
 /**
  * @swagger
  * /api/board/{id}:

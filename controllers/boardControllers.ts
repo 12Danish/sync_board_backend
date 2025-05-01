@@ -56,7 +56,7 @@ const getUserBoardsThumbnailData = asyncHandler(async (req, res) => {
  * {
  * security : "public" | "private",
  * name : "string"
- * collaborators : [string]
+ * collaborators : [{user: string , permission : `view` | `edit`}]
  * }
  *
  * @returns status 201 Created
@@ -218,6 +218,95 @@ const searchUserBoard = asyncHandler(async (req, res) => {
   }
 });
 
+/**
+ *
+ * @desc Adds a collaborator to a board if the authenticated user is the board owner.
+ * @route POST /api/board/:id/collaborators
+ * @access Private
+ * @bodyParam {string} targetUserId - ID of the user to be added as a collaborator
+ * @bodyParam {string} permission - Permission level to assign to the collaborator
+ * @pathParam {string} id - The ID of the board to which the collaborator is being added
+ *
+ * @returns status 201 Created
+ * {
+ *   message: "Collaborator successfully added"
+ * }
+ *
+ * @errors
+ * 400 - User is already a collaborator
+ * 403 - Only the board owner can add collaborators
+ * 404 - Board not found
+ * 500 - Unexpected error during collaborator addition
+ */
+const addCollaborator = asyncHandler(async (req, res) => {
+  try {
+    const decoded = req.user as jwt.JwtPayload;
+    const currentUserId = decoded.id;
+    const targetUserId = req.body("targetUserId");
+    const permission = req.body("permission");
+    const boardId = req.params["id"];
+
+    const added = await BoardCRDServices.addCollaboratorService({
+      currentUserId,
+      boardId,
+      targetUserId,
+      permission,
+    });
+
+    if (added) {
+      res.status(201).json({ message: "Collaborator successfully added" });
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
+
+/**
+ *
+ * @desc Removes a collaborator from a board if the authenticated user is the board owner.
+ * @route DELETE /api/board/:id/collaborators
+ * @access Private
+ * @bodyParam {string} targetUserId - ID of the collaborator to be removed
+ * @pathParam {string} id - The ID of the board from which the collaborator is being removed
+ *
+ * @returns status 200 OK
+ * {
+ *   message: "Collaborator successfully removed"
+ * }
+ *
+ * @errors
+ * 403 - Only the board owner can remove collaborators
+ * 404 - Board not found or user is not a collaborator
+ * 500 - Unexpected error during collaborator removal
+ */
+const deleteCollaborator = asyncHandler(async (req, res) => {
+  try {
+    const decoded = req.user as jwt.JwtPayload;
+    const currentUserId = decoded.id;
+    const targetUserId = req.body("targetUserId");
+    const boardId = req.params["id"];
+
+    const deleted = await BoardCRDServices.deleteCollaboratorService({
+      currentUserId,
+      targetUserId,
+      boardId,
+    });
+
+    if (deleted) {
+      res.status(200).json({ message: "Collaborator successfully removed" });
+    }
+  } catch (err: unknown) {
+    if (err instanceof Error) {
+      throw err;
+    } else {
+      throw new Error("An unknown error occurred");
+    }
+  }
+});
 // Use export instead of module.exports
 export {
   getUserBoardsThumbnailData,
@@ -225,4 +314,6 @@ export {
   createUserBoard,
   deleteUserBoard,
   searchUserBoard,
+  addCollaborator,
+  deleteCollaborator,
 };
