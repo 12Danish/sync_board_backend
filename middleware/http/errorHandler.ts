@@ -1,5 +1,5 @@
 // errorHandler.ts
-import { errorConstants } from "../constants";
+import { errorConstants } from "../../constants";
 import { Request, Response, NextFunction } from "express";
 
 const errorHandlerMiddleware = (

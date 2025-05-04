@@ -1,7 +1,7 @@
-/// <reference path="../types/express/index.d.ts" />
+/// <reference path="../../types/express/index.d.ts" />
 import { Request, Response, NextFunction } from "express";
 import { body, validationResult } from "express-validator";
-import { CustomError } from "../utils/customError";
+import { CustomError } from "../../utils/customError";
 import jwt from "jsonwebtoken";
 
 // This middleware class validates the fields coming in for registration and login

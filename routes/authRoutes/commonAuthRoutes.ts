@@ -5,7 +5,7 @@ import {
   getUserProfile,
   searchUser,
 } from "../../controllers/authControllers/commonAuthControllers";
-import { ValidationMiddleWare } from "../../middleware/authHandler";
+import { ValidationMiddleWare } from "../../middleware/http/authHandler";
 const router: Router = express.Router();
 
 /**

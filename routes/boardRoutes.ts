@@ -1,5 +1,5 @@
 import express, { Router } from "express";
-import { ValidationMiddleWare } from "../middleware/authHandler";
+import { ValidationMiddleWare } from "../middleware/http/authHandler";
 import {
   getUserBoardsThumbnailData,
   getUserBoardData,
@@ -9,7 +9,7 @@ import {
   addCollaborator,
   deleteCollaborator,
 } from "../controllers/boardControllers";
-import { BoardMiddleware } from "../middleware/boardHandler";
+import { BoardMiddleware } from "../middleware/http/boardHandler";
 const router: Router = express.Router();
 /**
  * @swagger

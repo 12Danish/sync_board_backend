@@ -5,7 +5,7 @@ import {
   userRegister,
   updateUserProfile,
 } from "../../controllers/authControllers/userAuthControllers";
-import { ValidationMiddleWare } from "../../middleware/authHandler";
+import { ValidationMiddleWare } from "../../middleware/http/authHandler";
 const router: Router = express.Router();
 
 /**
