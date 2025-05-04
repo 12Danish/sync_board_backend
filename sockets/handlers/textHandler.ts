@@ -14,7 +14,9 @@ import { CustomError } from "../../utils/customError";
 export const registerTextHandlers = (
   io: Server,
   socket: Socket,
-  permission: any
+  permission: any,
+  userId: string,
+  userEmail: string
 ) => {
   if (permission !== "edit") {
     socket.emit(
@@ -31,7 +33,7 @@ export const registerTextHandlers = (
    */
   socket.on("addText", (data) => {
     console.log("Adding new text:", data);
-    io.to(data.boardId).emit("addText", data);
+    io.to(data.boardId).emit("addText", { ...data, userEmail, userId });
   });
 
   /**
@@ -42,7 +44,7 @@ export const registerTextHandlers = (
    */
   socket.on("backspaceText", (data) => {
     console.log("Backspacing text:", data);
-    io.to(data.boardId).emit("backspaceText", data);
+    io.to(data.boardId).emit("backspaceText", { ...data, userEmail, userId });
   });
 
   /**
@@ -53,6 +55,6 @@ export const registerTextHandlers = (
    */
   socket.on("editText", (data) => {
     console.log("Editing text:", data);
-    io.to(data.boardId).emit("editText", data);
+    io.to(data.boardId).emit("editText", { ...data, userEmail, userId });
   });
 };

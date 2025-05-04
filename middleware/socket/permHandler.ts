@@ -6,7 +6,7 @@ export const socketPermMiddleware = async (
   socket: Socket,
   next: (err?: CustomError) => void
 ) => {
-  const user = (socket as any).user;
+  const userId = (socket as any).user.id;
   const boardId = socket.handshake.query.boardId;
   let permission = null;
   if (!boardId) {
@@ -23,11 +23,11 @@ export const socketPermMiddleware = async (
     permission = "view";
   }
 
-  if (board.createdBy.toString() == user.toString()) {
+  if (board.createdBy.toString() == userId.toString()) {
     permission = "edit";
   } else {
     const collaborator = board.collaborators.find(
-      (collab: any) => collab.user.toString() === user.toString()
+      (collab: any) => collab.user.toString() === userId.toString()
     );
 
     if (collaborator) {

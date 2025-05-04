@@ -17,7 +17,9 @@ import { CustomError } from "../../utils/customError";
 export const registerDrawingHandlers = (
   io: Server,
   socket: Socket,
-  permission: any
+  permission: any,
+  userId: string,
+  userEmail: string
 ) => {
   if (permission !== "edit") {
     socket.emit(
@@ -36,7 +38,7 @@ export const registerDrawingHandlers = (
 
   socket.on("draw", (data: any) => {
     console.log("Drawing data for shape received:", data);
-    io.to(data.boardId).emit("newDrawing", data);
+    io.to(data.boardId).emit("newDrawing", { ...data, userEmail, userId });
   });
 
   /**
@@ -46,7 +48,7 @@ export const registerDrawingHandlers = (
    */
   socket.on("erase", (data) => {
     console.log("Erase shape action:", data);
-    io.to(data.boardId).emit("erase", data);
+    io.to(data.boardId).emit("erase", { ...data, userEmail, userId });
   });
 
   /**
@@ -57,7 +59,7 @@ export const registerDrawingHandlers = (
    */
   socket.on("editShape", (data) => {
     console.log("Edit shape action:", data);
-    io.to(data.boardId).emit("editShape", data);
+    io.to(data.boardId).emit("editShape", { ...data, userEmail, userId });
   });
 
   /**
@@ -68,6 +70,6 @@ export const registerDrawingHandlers = (
    */
   socket.on("clearBoard", (boardId: string) => {
     console.log(`Clearing board: ${boardId}`);
-    io.to(boardId).emit("clearBoard");
+    io.to(boardId).emit("clearBoard", { userEmail, userId });
   });
 };

@@ -3,6 +3,7 @@ import { registerDrawingHandlers } from "./handlers/drawHandler";
 import { registerTextHandlers } from "./handlers/textHandler";
 import { socketAuthMiddleware } from "../middleware/socket/authHandler";
 import { socketPermMiddleware } from "../middleware/socket/permHandler";
+import { registerCursorHandler } from "./handlers/cursorHandler";
 import { CustomError } from "../utils/customError";
 /**
  * Registers the main socket event listeners for the application.
@@ -29,7 +30,9 @@ export const registerSocketHandlers = (io: Server) => {
      * @param boardId - The unique identifier of the board (can be a MongoDB ID).
      */
     const permission = (socket as any).permission;
-    
+    const userId = (socket as any).user.id;
+    const userEmail = (socket as any).user.email;
+
     socket.on("joinBoard", (boardId: string) => {
       if (permission) {
         socket.join(boardId);
@@ -41,15 +44,16 @@ export const registerSocketHandlers = (io: Server) => {
           "error",
           new CustomError("You do not have permission to draw.", 403)
         );
-        
       }
     });
 
+    // Registering handler for cursor movement. Cursor movements are tracked and broadcasted to users except the sender
+    registerCursorHandler(io, socket, permission, userId, userEmail);
     // Register all drawing-related socket events (draw, erase, edit, clear)
-    registerDrawingHandlers(io, socket, permission);
+    registerDrawingHandlers(io, socket, permission, userId, userEmail);
 
     // Register all text-related socket events (addText, backspaceText, editText)
-    registerTextHandlers(io, socket, permission);
+    registerTextHandlers(io, socket, permission, userId, userEmail);
 
     /**
      * Triggered when a user disconnects (closes tab, loses connection, etc.)
