@@ -2,8 +2,12 @@ import mongoose from "mongoose";
 
 const connectDB = async (): Promise<void> => {
   try {
+    const dbUrl =
+      process.env.NODE_ENV == "test"
+        ? (process.env.CONNECTION_STRING as string)
+        : (process.env.CONNECTION_STRING_TEST as string);
     const connect = await mongoose.connect(
-      process.env.CONNECTION_STRING as string
+      dbUrl
     );
 
     console.log(`MongoDB Connected: ${connect.connection.host}`);

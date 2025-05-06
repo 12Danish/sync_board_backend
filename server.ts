@@ -15,8 +15,6 @@ import { registerSocketHandlers } from "./sockets";
 // Load environment variables
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
 
 const app: Application = express();
 
@@ -32,7 +30,6 @@ const io = new socketIo.Server(server, {
 });
 
 registerSocketHandlers(io);
-const port: number = Number(process.env.PORT) || 5000;
 
 app.use(express.json());
 app.use(cookieParser());
@@ -43,6 +40,25 @@ app.use("/api", userRoutes);
 app.use("/api", firebaseAuthRoutes);
 app.use("/api", commonAuthRoutes);
 app.use(errorHandlerMiddleware);
-server.listen(port, () => {
-  console.log(`🚀 Server running on port ${port}`);
-});
+// Only connect to the database and start the server if this file is run directly
+if (require.main === module) {
+  const startServer = async () => {
+    try {
+      // Connect to database
+      await connectDB();
+      
+      // Start the server
+      const PORT = process.env.PORT || 5000;
+      server.listen(PORT, () => {
+        console.log(`🚀 Server running on port ${PORT}`);
+      });
+    } catch (error) {
+      console.error("Failed to start server:", error);
+      process.exit(1);
+    }
+  };
+  
+  // Actually call the startServer function
+  startServer();
+}
+export default app;
