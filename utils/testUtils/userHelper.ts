@@ -7,7 +7,7 @@ interface userSearchInput {
   userToken: any;
 }
 
-const searchUser = async (searchDetails: userSearchInput) => {
+const searchUserUtility = async (searchDetails: userSearchInput) => {
   let url = "/api/user/search/";
 
   if (searchDetails.email && searchDetails.username) {
@@ -18,5 +18,11 @@ const searchUser = async (searchDetails: userSearchInput) => {
     url += `?email=${searchDetails.email}`;
   }
 
-  const searchRes = await request(app).get(url);
+  const searchRes = await request(app)
+    .get(url)
+    .set("Cookie", searchDetails.userToken);
+
+  return searchRes;
 };
+
+export { searchUserUtility };
