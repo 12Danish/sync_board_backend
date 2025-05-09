@@ -48,7 +48,7 @@ export const registerDrawingHandlers = (
    */
   socket.on("erase", (data) => {
     console.log("Erase shape action:", data);
-    io.to(data.boardId).emit("erase", { ...data, userEmail, userId });
+    io.to(data.boardId).emit("erased", { ...data, userEmail, userId });
   });
 
   /**
@@ -59,7 +59,7 @@ export const registerDrawingHandlers = (
    */
   socket.on("editShape", (data) => {
     console.log("Edit shape action:", data);
-    io.to(data.boardId).emit("editShape", { ...data, userEmail, userId });
+    io.to(data.boardId).emit("editedShape", { ...data, userEmail, userId });
   });
 
   /**
@@ -70,6 +70,6 @@ export const registerDrawingHandlers = (
    */
   socket.on("clearBoard", (boardId: string) => {
     console.log(`Clearing board: ${boardId}`);
-    io.to(boardId).emit("clearBoard", { userEmail, userId });
+    io.to(boardId).emit("clearedBoard", { userEmail, userId });
   });
 };

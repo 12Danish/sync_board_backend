@@ -33,7 +33,7 @@ export const registerTextHandlers = (
    */
   socket.on("addText", (data) => {
     console.log("Adding new text:", data);
-    io.to(data.boardId).emit("addText", { ...data, userEmail, userId });
+    io.to(data.boardId).emit("addedText", { ...data, userEmail, userId });
   });
 
   /**
@@ -44,7 +44,7 @@ export const registerTextHandlers = (
    */
   socket.on("backspaceText", (data) => {
     console.log("Backspacing text:", data);
-    io.to(data.boardId).emit("backspaceText", { ...data, userEmail, userId });
+    io.to(data.boardId).emit("backspacedText", { ...data, userEmail, userId });
   });
 
   /**
@@ -55,6 +55,6 @@ export const registerTextHandlers = (
    */
   socket.on("editText", (data) => {
     console.log("Editing text:", data);
-    io.to(data.boardId).emit("editText", { ...data, userEmail, userId });
+    io.to(data.boardId).emit("editedText", { ...data, userEmail, userId });
   });
 };

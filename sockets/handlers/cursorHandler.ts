@@ -21,6 +21,6 @@ export const registerCursorHandler = (
   socket.on("cursorMove", (data) => {
     console.log("Broadcasting cursor information to different users.");
 
-    socket.to(data.boardId).emit("cursorMove", { ...data, userEmail, userId });
+    socket.to(data.boardId).emit("cursorMoved", { ...data, userEmail, userId });
   });
 };
