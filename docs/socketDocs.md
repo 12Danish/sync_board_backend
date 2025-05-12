@@ -1,58 +1,52 @@
-# Socket Events Guide
-
----
-
 ## 📦 Connection Prerequisites
 
-Before connecting, clients **must be authenticated**. Authentication is handled via middleware (`socketAuthMiddleware`) which validates the user.
+Clients **must be authenticated** before establishing a socket connection. Authentication is performed via `socketAuthMiddleware`, which extracts and validates a JWT from the `token` cookie.
 
-Upon successful connection, a user may join a board via the `joinBoard` event, which internally checks permissions using `socketPermMiddleware`.
+Once authenticated, users can join a board by emitting the `joinBoard` event. Permissions are checked using `socketPermMiddleware`.
 
 ---
 
 ## 🚀 Connection Flow
 
 ```ts
-// Authentication happens automatically via cookies
-// The server expects a 'token' cookie to be present in the request
+// Authentication via cookies (token cookie must be present)
 const socket = io("https://your-api-url");
 ```
 
-**Note:** Make sure you're authenticated and have a valid `token` cookie set before attempting to connect.
-```
+> **Note:** Ensure that the client is authenticated and the `token` cookie is set before connecting.
 
 ---
 
 ## 🔐 Authentication & Permissions
 
-* All socket connections go through an **authentication layer** that verifies the JWT token from cookies.
-* Authentication is handled by `socketAuthMiddleware` which extracts the token from the `token` cookie.
-* On `joinBoard`, the user's **permissions** (`view` or `edit`) are verified through `socketPermMiddleware`.
-* Only users with `"edit"` permission can draw or modify text.
-* Permission levels are determined by:
-  - Board creator automatically gets `"edit"` permission
-  - Collaborators have either `"view"` or `"edit"` as specified in their collaborator entry
-  - Public boards grant `"view"` permission to authenticated users
+- All connections go through `socketAuthMiddleware`, which reads the `token` from cookies.
+- Board access and action permissions (`view` or `edit`) are enforced by `socketPermMiddleware`.
+- Only users with `edit` permission can draw or manipulate text.
+- Permission rules:
+
+  - Board creator always has `edit`
+  - Collaborators are assigned either `view` or `edit`
+  - Public boards grant `view` access to authenticated users
 
 ---
 
 ## 📌 Supported Events
 
-### 1. **joinBoard**
+### `joinBoard`
 
-Join a collaborative session (room) by board ID.
+Joins the client to a board room.
 
 ```ts
 socket.emit("joinBoard", boardId);
 ```
 
-**Listening for response:**
+**Success response:**
 
 ```ts
 socket.on("joinedBoard", ({ boardId, userEmail, userId }) => { ... });
 ```
 
-**Listening for failure:**
+**Failure response:**
 
 ```ts
 socket.on("error", ({ message }) => { ... });
@@ -60,15 +54,17 @@ socket.on("error", ({ message }) => { ... });
 
 ---
 
-### 2. **leaveBoard**
+###  `leaveBoard`
 
 Leaves the current board session.
+
+> ⚠️ It is recommended to wait **at least 5 seconds** before calling `leaveBoard` to allow syncing to complete.
 
 ```ts
 socket.emit("leaveBoard", boardId);
 ```
 
-**Listening for response:**
+**Response:**
 
 ```ts
 socket.on("leftBoard", ({ boardId, userEmail, userId }) => { ... });
@@ -76,9 +72,9 @@ socket.on("leftBoard", ({ boardId, userEmail, userId }) => { ... });
 
 ---
 
-### 3. **cursorMove**
+###  `cursorMove`
 
-Broadcasts live cursor position to other users in the same board.
+Broadcasts live cursor movement to other users.
 
 ```ts
 socket.emit("cursorMove", {
@@ -88,134 +84,237 @@ socket.emit("cursorMove", {
 });
 ```
 
-**Listening for others' cursors:**
+**Receive updates from others:**
 
 ```ts
-socket.on("cursorMoved", ({ boardId, x, y, userId, userEmail }) => { ... });
+socket.on("cursorMoved", ({...data, userId, userEmail }) => { ... });
 ```
 
 ---
 
-### 4. **Drawing Events** (Permission: `edit`)
+### 🖌️ Drawing Events (Requires `edit` permission)
 
-#### ➤ draw
+> The `boardId` and a `updatedBoardPage` object with `pageNumber` and `whiteBoardObjects` are required for all drawing events.
+
+#### `draw`
 
 ```ts
 socket.emit("draw", {
   boardId,
-  updatedBoardShapes: [...],
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      type: "rectangle",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+    },
+  },
 });
 ```
 
-**Listening for others' drawings:**
+**Response:**
 
 ```ts
-socket.on("newDrawing", ({ updatedBoardShapes, userId }) => { ... });
+socket.on("newDrawing", ({ ...data, userId, userEmail }) => { ... });
 ```
 
-#### ➤ erase
+#### `erase`
 
 ```ts
 socket.emit("erase", {
   boardId,
-  updatedBoardShapes: [...],
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      type: "rectangle",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+    },
+  },
 });
 ```
 
-**Listening for erase events:**
+**Response:**
 
 ```ts
-socket.on("erased", ({ updatedBoardShapes, userId }) => { ... });
+socket.on("erased", ({ ...data, userId, userEmail }) => { ... });
 ```
 
-#### ➤ editShape
+#### `editShape`
 
 ```ts
 socket.emit("editShape", {
   boardId,
-  updatedBoardShapes: [...],
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      type: "rectangle",
+      x: 10,
+      y: 20,
+      width: 100,
+      height: 50,
+    },
+  },
 });
 ```
 
-**Listening for shape edits:**
+**Response:**
 
 ```ts
-socket.on("editedShape", ({ updatedBoardShapes, userId }) => { ... });
-```
-
-#### ➤ clearBoard
-
-```ts
-socket.emit("clearBoard", boardId);
-```
-
-**Listening for board clear events:**
-
-```ts
-socket.on("clearedBoard", ({ userId }) => { ... });
+socket.on("editedShape", ({ ...data, userId, userEmail }) => { ... });
 ```
 
 ---
 
-### 5. **Text Events** (Permission: `edit`)
+### 📤 `clearPage` Event
 
-#### ➤ addText
+**Description**:
+Clears all shapes on a specific page of the board and notifies all users in the board room. Also updates the database with the cleared page data.
+
+**Client Request Format**:
+
+```ts
+socket.emit("clearPage", {
+  boardId: string,
+  updatedBoardPage: {
+    pageNumber: number,
+    whiteBoardObjects: {}, // Empty
+  },
+});
+```
+
+**Server Emits To Room**:
+`"clearedPage"` with the same `...data` plus `userEmail` and `userId`.
+
+---
+
+### ❌ `deletePage` Event
+
+**Description**:
+Deletes an entire page from the board and notifies all users in the board room. Also synchronizes the deletion to the database.
+
+**Client Request Format**:
+
+```ts
+socket.emit("deletePage", {
+  boardId: string,
+  pageNumber: number,
+});
+```
+
+**Server Emits To Room**:
+`"deletedPage"` with `userEmail` and `userId`.
+
+Sure! Here's your rewritten **Text Events** section, now fully aligned with the structure and format you provided earlier (matching other event documentation for consistency):
+
+---
+
+### 5. 📝 Text Events (Requires `edit` permission)
+
+These events allow collaborative text manipulation on a whiteboard. All changes are synced with the backend and broadcast to other users in the board room.
+
+---
+
+#### 🔤 `addText`
 
 ```ts
 socket.emit("addText", {
   boardId,
-  newTextElement: {...},
-  updatedBoardShapes: [...],
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      textId123: {
+        type: "text",
+        x: 100,
+        y: 150,
+        content: "New Text Here",
+        fontSize: 16,
+        color: "#000000",
+        // ...other style properties
+      }
+    }
+  }
 });
 ```
 
-**Listening for text additions:**
+**Response:**
 
 ```ts
-socket.on("addedText", ({ newTextElement, userId }) => { ... });
-```
-
-#### ➤ backspaceText
-
-```ts
-socket.emit("backspaceText", {
-  boardId,
-  textId,
-  updatedBoardShapes: [...],
+socket.on("addedText", ({ ...data, userId, userEmail }) => {
+  // Handle new text addition
 });
-```
-
-**Listening for text backspace events:**
-
-```ts
-socket.on("backspacedText", ({ textId, userId }) => { ... });
-```
-
-#### ➤ editText
-
-```ts
-socket.emit("editText", {
-  boardId,
-  textId,
-  updatedText: "new content",
-  updatedBoardShapes: [...],
-});
-```
-
-**Listening for text edit events:**
-
-```ts
-socket.on("editedText", ({ textId, updatedText, userId }) => { ... });
 ```
 
 ---
 
-### 6. **disconnect**
+#### ⌫ `backspaceText`
 
-Triggered automatically when user leaves the page or loses connection.
+```ts
+socket.emit("backspaceText", {
+  boardId,
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      textId123: {
+        ...updatedObjectAfterBackspace
+      }
+    }
+  }
+});
+```
+
+**Response:**
+
+```ts
+socket.on("backspacedText", ({ ...data, userId, userEmail }) => {
+  // Handle backspace effect
+});
+```
+
+---
+
+#### ✏️ `editText`
+
+```ts
+socket.emit("editText", {
+  boardId,
+  updatedBoardPage: {
+    pageNumber,
+    whiteBoardObjects: {
+      textId123: {
+        content: "Updated text content",
+        // Optional: updated styles (font, size, color, etc.)
+      }
+    }
+  }
+});
+```
+
+**Response:**
+
+```ts
+socket.on("editedText", ({ ...data, userId, userEmail }) => {
+  // Handle text edit
+});
+```
+
+---
+
+---
+
+###  `disconnect`
+
+Fired automatically when a user disconnects (e.g. closes the tab, loses connection).For safety
+add delay here too so that data persists.
 
 ```ts
 socket.on("disconnect", () => {
   console.log("Disconnected from server.");
 });
+---
+
 ```
