@@ -19,7 +19,7 @@ import jwt from "jsonwebtoken";
  * }
  */
 const userLogout = asyncHandler(async (req, res) => {
-  console.log("logout called")
+  console.log("logout called");
   try {
     res.clearCookie("token", {
       httpOnly: true,
@@ -71,13 +71,13 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
     if (user) {
       res.status(200).json({
-    id: user._id,
-    username: user.username,
-    email: user.email,
-    authProvider: user.authProvider,
-    createdAt: user.createdAt,
-    updatedAt: user.updatedAt,
-  });
+        id: user._id,
+        username: user.username,
+        email: user.email,
+        authProvider: user.authProvider,
+        createdAt: user.createdAt,
+        updatedAt: user.updatedAt,
+      });
     } else {
       throw new CustomError("User not found", 404);
     }
@@ -92,11 +92,12 @@ const getUserProfile = asyncHandler(async (req, res) => {
 
 const searchUser = asyncHandler(async (req, res) => {
   try {
+    const id = typeof req.query.id === "string" ? req.query.id : null;
     const username =
       typeof req.query.username === "string" ? req.query.username : null;
     const email = typeof req.query.email === "string" ? req.query.email : null;
 
-    const searchedUsers = await searchUserService({ username, email });
+    const searchedUsers = await searchUserService({ id,username, email });
 
     if (searchedUsers) {
       res.status(200).json(searchedUsers);

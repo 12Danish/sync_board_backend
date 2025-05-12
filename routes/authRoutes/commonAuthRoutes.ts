@@ -73,16 +73,21 @@ router.route("/userLogout").get(userLogout);
 router
   .route("/userProfile")
   .get(ValidationMiddleWare.validateToken(), getUserProfile);
-
 /**
  * @swagger
  * /api/user/search:
  *   get:
- *     summary: Search for users using partial username or email
+ *     summary: Search for users by id, username, or email
  *     tags: [User]
  *     security:
  *       - bearerAuth: []
  *     parameters:
+ *       - in: query
+ *         name: id
+ *         schema:
+ *           type: string
+ *         required: false
+ *         description: User ID to search for (takes priority if provided)
  *       - in: query
  *         name: username
  *         schema:
@@ -118,7 +123,7 @@ router
  *                     type: string
  *                     format: date-time
  *       400:
- *         description: Missing or invalid query parameters (username or email required)
+ *         description: Missing or invalid query parameters (id, username, or email required)
  *       404:
  *         description: No matching users found
  *       500:

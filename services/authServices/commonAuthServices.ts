@@ -55,6 +55,7 @@ const userGetService = async (userId: ObjectId | string) => {
  * - If no users match the query, throws a 404 error.
  *
  * @param {Object} params - The search parameters.
+ * @param {string | null} params.id - The id for searching in user schema.
  * @param {string | null} params.username - The partial username to search for (optional).
  * @param {string | null} params.email - The partial email to search for (optional).
  *
@@ -65,24 +66,32 @@ const userGetService = async (userId: ObjectId | string) => {
  */
 
 const searchUserService = async ({
+  id,
   username,
   email,
 }: {
-  username: string | null;
-  email: string | null;
+  id?: string | null;
+  username?: string | null;
+  email?: string | null;
 }) => {
   try {
-    const query: any = {};
+    let users;
 
-    if (username) {
-      query.username = { $regex: username, $options: "i" };
+    if (id) {
+      users = await User.find({ _id: id });
+    } else {
+      const query: any = {};
+
+      if (username) {
+        query.username = { $regex: username, $options: "i" };
+      }
+
+      if (email) {
+        query.email = { $regex: email, $options: "i" };
+      }
+
+      users = await User.find(query);
     }
-
-    if (email) {
-      query.email = { $regex: email, $options: "i" };
-    }
-
-    const users = await User.find(query);
 
     if (!users || users.length === 0) {
       throw new CustomError("No matching users found", 404);
