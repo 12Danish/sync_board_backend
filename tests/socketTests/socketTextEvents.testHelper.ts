@@ -1,6 +1,7 @@
 import { socketEventsInput } from "../../utils/testUtils/joinBoardHelper";
 import { joinRoom } from "../../utils/testUtils/joinBoardHelper";
-
+import Board from "../../models/boardModel";
+import ShapeChanges from "../../models/changesModel";
 export const socketTextEventsTester = async (input: socketEventsInput) => {
   await joinRoom(input);
   console.log("Rooms joined for text events");
@@ -67,13 +68,27 @@ export const socketTextEventsTester = async (input: socketEventsInput) => {
       }
     };
 
-    const onEditedText = (data: any) => {
+    const onEditedText = async (data: any) => {
       try {
         expect(data.textId).toBe(editTextData.textId);
         expect(data.newText).toBe(editTextData.newText);
         expect(data.userEmail).toBeDefined();
         expect(data.userId).toBeDefined();
         console.log("✔️ editedText event validated");
+
+        // 1. Check if Board shapes were updated
+        const updatedBoard = await Board.findById(boardId);
+        expect(updatedBoard).not.toBeNull();
+        expect(updatedBoard?.shapes).toBeDefined();
+        console.log("Updated Board Shapes:", updatedBoard?.shapes);
+
+        // 2. Check if ShapeChanges entry was added
+        const shapeChangeEntry = await ShapeChanges.findOne({ boardId }).sort({
+          createdAt: -1,
+        });
+        expect(shapeChangeEntry).not.toBeNull();
+        expect(shapeChangeEntry?.changerId.toString()).toBe(data.userId);
+        console.log("New Shape Change Entry:", shapeChangeEntry);
 
         input.clientSocketUser2.off("editedText", onEditedText);
         clearTimeout(timeout);
