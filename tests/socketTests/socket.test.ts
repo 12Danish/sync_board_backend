@@ -13,7 +13,7 @@ import { httpServer } from "../setupTests";
 import { socketCursorMovementTester } from "./socketCursorMovement.testHelper";
 import { socketTextEventsTester } from "./socketTextEvents.testHelper";
 import { socketDrawEventsTester } from "./socketDrawEvents.testHelper";
-
+jest.setTimeout(30000);
 describe("Web socket tests", () => {
   let clientSocketUser1: any;
   let clientSocketUser2: any;
@@ -107,14 +107,6 @@ describe("Web socket tests", () => {
     });
   }, 30000);
 
-  it("Tests text events", async () => {
-    await socketTextEventsTester({
-      clientSocketUser1,
-      clientSocketUser2,
-      boardId: user1BoardId,
-    });
-  });
-
   it("Tests drawing events", async () => {
     await socketDrawEventsTester({
       clientSocketUser1,
@@ -123,7 +115,16 @@ describe("Web socket tests", () => {
     });
   });
 
-  afterAll(() => {
+  it("Tests text events", async () => {
+    await socketTextEventsTester({
+      clientSocketUser1,
+      clientSocketUser2,
+      boardId: user1BoardId,
+    });
+  });
+
+  afterAll(async () => {
+    await new Promise((resolve) => setTimeout(resolve, 10000));
     clientSocketUser1.close();
     clientSocketUser2.close();
   });

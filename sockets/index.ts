@@ -52,7 +52,7 @@ export const registerSocketHandlers = (io: Server) => {
         console.log(`User ${socket.id} joined board ${boardId}`);
         socket.emit("joinedBoard", { boardId, userEmail, userId });
 
-        // registering relevant handlers on joining a new board 
+        // registering relevant handlers on joining a new board
         registerCursorHandler(io, socket, permission, userId, userEmail);
         registerDrawingHandlers(io, socket, permission, userId, userEmail);
         registerTextHandlers(io, socket, permission, userId, userEmail);

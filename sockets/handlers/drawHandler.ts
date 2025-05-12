@@ -1,6 +1,9 @@
 import { Socket, Server } from "socket.io";
 import { CustomError } from "../../utils/customError";
-import { socketShapeService } from "../../services/boardServices/socketShapeUpdateService";
+import {
+  socketPageUpdateService,
+  socketPageDeleteService,
+} from "../../services/boardServices/socketPageServices";
 /**
  * Registers socket event handlers related to drawing actions.
  *
@@ -32,8 +35,8 @@ export const registerDrawingHandlers = (
 
   /**
    * Listens for 'draw' events and broadcasts the new drawing data to all users
-   * in the same board room.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * in the same board room.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param data - The drawing data, expected to include at least a `boardId` and shape details.
    */
 
@@ -41,10 +44,10 @@ export const registerDrawingHandlers = (
     console.log("Drawing data for shape received:", data);
     io.to(data.boardId).emit("newDrawing", { ...data, userEmail, userId });
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);
@@ -59,18 +62,18 @@ export const registerDrawingHandlers = (
   });
 
   /**
-   * Listens for 'erase' events and broadcasts the erase action to users in the board room.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * Listens for 'erase' events and broadcasts the erase action to users in the board room.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param data - Data related to the erase action, including the board ID and target object.
    */
   socket.on("erase", async (data) => {
     console.log("Erase shape action:", data);
     io.to(data.boardId).emit("erased", { ...data, userEmail, userId });
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);
@@ -86,18 +89,18 @@ export const registerDrawingHandlers = (
 
   /**
    * Listens for 'editShape' events and broadcasts the updated shape data
-   * (e.g., color, size) to users in the same board.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * (e.g., color, size) to users in the same board. The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param data - Data containing the board ID and the updated shape properties.
    */
   socket.on("editShape", async (data) => {
     console.log("Edit shape action:", data);
     io.to(data.boardId).emit("editedShape", { ...data, userEmail, userId });
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);
@@ -113,18 +116,49 @@ export const registerDrawingHandlers = (
 
   /**
    * Listens for 'clearBoard' events and notifies all users in the board room
-   * to clear their canvas.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * to clear their canvas.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param boardId - The ID of the board to be cleared.
    */
-  socket.on("clearBoard", async (boardId: string) => {
-    console.log(`Clearing board: ${boardId}`);
-    io.to(boardId).emit("clearedBoard", { userEmail, userId });
+  socket.on("clearPage", async (data) => {
+    console.log(`Clearing page in board: ${data.boardId}`);
+    console.group("This is the data being received in the clearPage");
+    console.log(data);
+    io.to(data.boardId).emit("clearedPage", { ...data, userEmail, userId });
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
-        boardId: boardId,
-        new_shapes: [],
+        boardId: data.boardId,
+        updated_page: data.updatedBoardPage,
+      });
+    } catch (error: any) {
+      console.error("Failed to save shapes to DB:", error);
+
+      // 3. Optionally notify only the sender
+      socket.emit("error", {
+        message:
+          error.message ||
+          "Failed to save board changes. Your edits might not be saved permanently.",
+      });
+    }
+  });
+
+  /**
+   * Listens for 'clearBoard' events and notifies all users in the board room
+   * to clear their canvas.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
+   * @param boardId - The ID of the board to be cleared.
+   */
+  socket.on("deletePage", async (data) => {
+    console.log(
+      `Deleting page in board: ${data.boardId} with page number ${data.pageNumber}`
+    );
+    io.to(data.boardId).emit("deletedPage", { userEmail, userId });
+    try {
+      await socketPageDeleteService({
+        changerId: userId,
+        boardId: data.boardId,
+        pageNumber: data.pageNumber,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);

@@ -4,6 +4,12 @@ export interface ICollaborator {
   user: mongoose.Types.ObjectId;
   permission: "view" | "edit";
 }
+
+export interface IPage {
+  pageNumber: number;
+  whiteBoardObjects: { [key: string]: any }[];
+  [key: string]: any; // Other dynamic properties
+}
 // Define the TypeScript Interface
 export interface IBoard extends Document {
   name: string;
@@ -12,9 +18,20 @@ export interface IBoard extends Document {
   createdBy: mongoose.Types.ObjectId;
   collaborators: ICollaborator[]; // Array of user IDs or emails
   thumbnail_img: string;
-  shapes: { [key: string]: any }[]; // Array of flexible objects (dynamic)
+  pages: IPage[]; // Array of flexible objects (dynamic)
   security: "public" | "private";
 }
+
+export const PageSchema: Schema = new Schema(
+  {
+    pageNumber: { type: Number, required: true },
+    whiteBoardObjects: {
+      type: [Schema.Types.Mixed], // allows any structure inside the array
+      default: [],
+    },
+  },
+  { _id: false, strict: false }
+);
 
 const BoardSchema: Schema = new Schema(
   {
@@ -30,7 +47,7 @@ const BoardSchema: Schema = new Schema(
         },
       },
     ],
-    shapes: { type: [Schema.Types.Mixed], default: [] },
+    pages: { type: [PageSchema], default: [] },
     thumbnail_img: { type: String, default: "" },
     security: {
       type: String,
@@ -38,7 +55,8 @@ const BoardSchema: Schema = new Schema(
       default: "private",
     },
   },
-  { timestamps: true } // Allows to automatically fill time fields
+  { timestamps: true }, // Allows to automatically fill time fields'
+ 
 );
 
 // Compound unique index to prevent duplicate board names per user

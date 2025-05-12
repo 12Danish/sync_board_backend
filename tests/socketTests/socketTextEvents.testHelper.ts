@@ -1,44 +1,69 @@
 import { socketEventsInput } from "../../utils/testUtils/joinBoardHelper";
 import { joinRoom } from "../../utils/testUtils/joinBoardHelper";
 import Board from "../../models/boardModel";
-import ShapeChanges from "../../models/changesModel";
+import PageChanges from "../../models/changesModel";
+
 export const socketTextEventsTester = async (input: socketEventsInput) => {
   await joinRoom(input);
   console.log("Rooms joined for text events");
 
   return new Promise<void>((resolve, reject) => {
     const boardId = input.boardId;
+    const pageNumber = 1;
 
     const addTextData = {
-      x: 100,
-      y: 120,
       boardId,
-      text: "Hello World",
-      style: { fontSize: 14, fontWeight: "bold" },
+      updatedBoardPage: {
+        pageNumber,
+        whiteBoardObjects: {
+          type: "text",
+          id: "text-001",
+          x: 100,
+          y: 120,
+          text: "Hello World",
+          style: { fontSize: 14, fontWeight: "bold" },
+        },
+      },
     };
 
     const backspaceData = {
       boardId,
-      textId: "text-001",
+      updatedBoardPage: {
+        pageNumber,
+        whiteBoardObjects: {
+          type: "text",
+          id: "text-001",
+        },
+      },
     };
 
     const editTextData = {
       boardId,
-      textId: "text-001",
-      newText: "Updated Content",
+      updatedBoardPage: {
+        pageNumber,
+        whiteBoardObjects: {
+          type: "text",
+          id: "text-001",
+          newText: "Updated Content",
+        },
+      },
     };
 
     const timeout = setTimeout(() => {
       reject(new Error("One or more text events were not received in time"));
     }, 30000);
 
-    let stage = 0;
-
     const onAddedText = (data: any) => {
       try {
-        expect(data.x).toBe(addTextData.x);
-        expect(data.y).toBe(addTextData.y);
-        expect(data.text).toBe(addTextData.text);
+        expect(data.updatedBoardPage.whiteBoardObjects.x).toBe(
+          addTextData.updatedBoardPage.whiteBoardObjects.x
+        );
+        expect(data.updatedBoardPage.whiteBoardObjects.y).toBe(
+          addTextData.updatedBoardPage.whiteBoardObjects.y
+        );
+        expect(data.updatedBoardPage.whiteBoardObjects.text).toBe(
+          addTextData.updatedBoardPage.whiteBoardObjects.text
+        );
         expect(data.userEmail).toBeDefined();
         expect(data.userId).toBeDefined();
         console.log("✔️ addedText event validated");
@@ -54,7 +79,9 @@ export const socketTextEventsTester = async (input: socketEventsInput) => {
 
     const onBackspacedText = (data: any) => {
       try {
-        expect(data.textId).toBe(backspaceData.textId);
+        expect(data.updatedBoardPage.whiteBoardObjects.id).toBe(
+          backspaceData.updatedBoardPage.whiteBoardObjects.id
+        );
         expect(data.userEmail).toBeDefined();
         expect(data.userId).toBeDefined();
         console.log("✔️ backspacedText event validated");
@@ -70,25 +97,29 @@ export const socketTextEventsTester = async (input: socketEventsInput) => {
 
     const onEditedText = async (data: any) => {
       try {
-        expect(data.textId).toBe(editTextData.textId);
-        expect(data.newText).toBe(editTextData.newText);
+        expect(data.updatedBoardPage.whiteBoardObjects.id).toBe(
+          editTextData.updatedBoardPage.whiteBoardObjects.id
+        );
+        expect(data.updatedBoardPage.whiteBoardObjects.newText).toBe(
+          editTextData.updatedBoardPage.whiteBoardObjects.newText
+        );
         expect(data.userEmail).toBeDefined();
         expect(data.userId).toBeDefined();
         console.log("✔️ editedText event validated");
 
-        // 1. Check if Board shapes were updated
+        // 1. Check if board pages were updated
         const updatedBoard = await Board.findById(boardId);
         expect(updatedBoard).not.toBeNull();
-        expect(updatedBoard?.shapes).toBeDefined();
-        console.log("Updated Board Shapes:", updatedBoard?.shapes);
+        expect(updatedBoard?.pages).toBeDefined();
+        console.log("Updated Board Pages:", updatedBoard?.pages);
 
-        // 2. Check if ShapeChanges entry was added
-        const shapeChangeEntry = await ShapeChanges.findOne({ boardId }).sort({
+        // 2. Check if PageChanges entry was added
+        const changeEntry = await PageChanges.findOne({ boardId }).sort({
           createdAt: -1,
         });
-        expect(shapeChangeEntry).not.toBeNull();
-        expect(shapeChangeEntry?.changerId.toString()).toBe(data.userId);
-        console.log("New Shape Change Entry:", shapeChangeEntry);
+        expect(changeEntry).not.toBeNull();
+        expect(changeEntry?.changerId.toString()).toBe(data.userId);
+        console.log("New Page Change Entry:", changeEntry);
 
         input.clientSocketUser2.off("editedText", onEditedText);
         clearTimeout(timeout);
@@ -99,7 +130,7 @@ export const socketTextEventsTester = async (input: socketEventsInput) => {
       }
     };
 
-    // Start with addText
+    // Start the event chain with addText
     input.clientSocketUser2.on("addedText", onAddedText);
     input.clientSocketUser1.emit("addText", addTextData);
   });

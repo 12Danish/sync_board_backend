@@ -1,6 +1,6 @@
 import { Server, Socket } from "socket.io";
 import { CustomError } from "../../utils/customError";
-import { socketShapeService } from "../../services/boardServices/socketShapeUpdateService";
+import { socketPageUpdateService } from "../../services/boardServices/socketPageServices";
 /**
  * Registers socket event handlers related to text manipulation on the board.
  *
@@ -28,8 +28,8 @@ export const registerTextHandlers = (
   }
   /**
    * Listens for 'addText' events and broadcasts the new text object
-   * to all clients in the same board room.
-   * Attempts to synchronise changes to db by calling socketShapeService
+   * to all clients in the same board room.The data coming in for the shapes will be specific to a page
+   * Attempts to synchronise changes to db by calling socketPageService
    * @param data - Text data including position, style, content, and boardId.
    */
   socket.on("addText", async (data) => {
@@ -38,10 +38,10 @@ export const registerTextHandlers = (
 
     // 2. Save to DB asynchronously
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);
@@ -57,18 +57,18 @@ export const registerTextHandlers = (
 
   /**
    * Listens for 'backspaceText' events and broadcasts the updated
-   * text state after a backspace operation to the board room.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * text state after a backspace operation to the board room.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param data - Data containing the boardId and affected text object or ID.
    */
   socket.on("backspaceText", async (data) => {
     console.log("Backspacing text:", data);
     io.to(data.boardId).emit("backspacedText", { ...data, userEmail, userId }); // 2. Save to DB asynchronously
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);
@@ -84,8 +84,8 @@ export const registerTextHandlers = (
 
   /**
    * Listens for 'editText' events and broadcasts the updated text content
-   * (e.g., content change, formatting) to all users in the same board room.
-   *Attempts to synchronise changes to db by calling socketShapeService
+   * (e.g., content change, formatting) to all users in the same board room.The data coming in for the shapes will be specific to a page
+   *Attempts to synchronise changes to db by calling socketPageService
    * @param data - Data including boardId, textId, and updated content or style.
    */
   socket.on("editText", async (data) => {
@@ -93,10 +93,10 @@ export const registerTextHandlers = (
     io.to(data.boardId).emit("editedText", { ...data, userEmail, userId });
     // 2. Save to DB asynchronously
     try {
-      await socketShapeService({
+      await socketPageUpdateService({
         changerId: userId,
         boardId: data.boardId,
-        new_shapes: data.updatedBoardShapes,
+        updated_page: data.updatedBoardPage,
       });
     } catch (error: any) {
       console.error("Failed to save shapes to DB:", error);

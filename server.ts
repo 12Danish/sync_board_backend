@@ -27,6 +27,8 @@ const io = new socketIo.Server(server, {
     origin: "http://localhost:3000", // Allow all origins (you can restrict this in production)
     credentials: true,
   },
+  pingInterval: 25000, // default: 25000 ms
+  pingTimeout: 60000, // wait 60s before disconnecting
 });
 
 registerSocketHandlers(io);

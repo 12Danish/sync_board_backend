@@ -377,13 +377,38 @@ router
  *                 collaborators:
  *                   type: array
  *                   items:
- *                     type: string
- *                   example: ["64f8d33a1f5c5e2d8b3f3c92", "64f9c25adf1f5d3a1c3345c9"]
- *                 shapes:
+ *                     type: object
+ *                     properties:
+ *                       user:
+ *                         type: string
+ *                         example: "64f8d33a1f5c5e2d8b3f3c92"
+ *                       permission:
+ *                         type: string
+ *                         enum: [view, edit]
+ *                         example: "edit"
+ *                 pages:
  *                   type: array
  *                   items:
  *                     type: object
- *                   example: [{ "type": "rectangle", "position": { "x": 10, "y": 20 } }]
+ *                     properties:
+ *                       pageNumber:
+ *                         type: integer
+ *                         example: 1
+ *                       whiteBoardObjects:
+ *                         type: array
+ *                         items:
+ *                           type: object
+ *                           additionalProperties: true
+ *                         example:
+ *                           - type: rectangle
+ *                             position:
+ *                               x: 10
+ *                               y: 20
+ *                           - type: circle
+ *                             radius: 5
+ *                             position:
+ *                               x: 30
+ *                               y: 40
  *                 thumbnail_img:
  *                   type: string
  *                   example: "https://example.com/thumbnail.jpg"
@@ -406,6 +431,7 @@ router
  *       500:
  *         description: Unexpected server error while trying to retrieve the board.
  */
+
 router
   .route("/board/:id")
   .get(
