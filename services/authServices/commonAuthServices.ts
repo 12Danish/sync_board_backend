@@ -24,14 +24,14 @@ const userGetService = async (userId: ObjectId | string) => {
       throw new CustomError("User not found", 404);
     }
 
-    let returnData: any = {
+    const returnData = {
+      _id: user._id,
       email: user.email,
       authProvider: user.authProvider,
+      username: user.username, // <--- Always include it
+      createdAt: user.createdAt,
+      updatedAt: user.updatedAt,
     };
-
-    if (user.authProvider == "local") {
-      returnData.username = user.username;
-    }
 
     return returnData;
   } catch (err: any) {

@@ -44,7 +44,7 @@ const userRegister = asyncHandler(async (req, res) => {
       .status(201)
       .json({ message: "User registered successfully", user: newUser });
   } catch (err: unknown) {
-    if (err instanceof Error) {
+    if (err instanceof Error) { 
       throw err;
     } else {
       throw new Error("An unknown error occurred");
@@ -93,8 +93,8 @@ const userLogin = asyncHandler(async (req, res) => {
     // Set JWT token in client cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Will be false for localhost in dev.
-      sameSite: "none", // Allow cross-origin cookies
+      secure: false, // Will be false for localhost in dev.
+      sameSite: "lax", // Allow cross-origin cookies
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 

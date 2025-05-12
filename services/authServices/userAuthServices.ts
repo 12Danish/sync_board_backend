@@ -131,7 +131,7 @@ class UserAuthServices {
         email: user.email,
         authProvider: user.authProvider,
       });
-
+      console.log("returning: ", user);
       return {
         token,
         user: {

@@ -136,3 +136,6 @@ dist
 .pnp.*
 
 todo.txt
+
+# Service account key file
+serviceAccountKey.json

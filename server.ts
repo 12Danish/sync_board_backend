@@ -12,19 +12,19 @@ import swaggerUi from "swagger-ui-express";
 import swaggerSpec from "./swagger";
 import socketIo from "socket.io";
 import { registerSocketHandlers } from "./sockets";
+import cors from "cors";
 // Load environment variables
 dotenv.config();
-
 
 const app: Application = express();
 
 // Setup HTTP server
 const server = require("http").createServer(app); // Create HTTP server using express app
 
-// Initialize Socket.IO with the server
+// Initialize Socket.IO with the server. This is for websockets
 const io = new socketIo.Server(server, {
   cors: {
-    origin: "http://localhost:5173", // Allow all origins (you can restrict this in production)
+    origin: "http://localhost:3000", // Allow all origins (you can restrict this in production)
     credentials: true,
   },
 });
@@ -33,6 +33,14 @@ registerSocketHandlers(io);
 
 app.use(express.json());
 app.use(cookieParser());
+
+app.use(
+  cors({
+    origin: "http://localhost:3000",
+    credentials: true,
+  })
+);
+
 app.use(bodyParser.json());
 app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 app.use("/api", boardRoutes);
@@ -46,7 +54,7 @@ if (require.main === module) {
     try {
       // Connect to database
       await connectDB();
-      
+
       // Start the server
       const PORT = process.env.PORT || 5000;
       server.listen(PORT, () => {
@@ -57,7 +65,7 @@ if (require.main === module) {
       process.exit(1);
     }
   };
-  
+
   // Actually call the startServer function
   startServer();
 }

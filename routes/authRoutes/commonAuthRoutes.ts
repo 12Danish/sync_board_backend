@@ -30,9 +30,7 @@ const router: Router = express.Router();
  *       500:
  *         description: Internal server error
  */
-router
-  .route("/userLogout")
-  .get(ValidationMiddleWare.validateToken(), userLogout);
+router.route("/userLogout").get(userLogout);
 
 /**
  * @swagger

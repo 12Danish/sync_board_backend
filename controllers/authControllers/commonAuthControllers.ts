@@ -19,6 +19,7 @@ import jwt from "jsonwebtoken";
  * }
  */
 const userLogout = asyncHandler(async (req, res) => {
+  console.log("logout called")
   try {
     res.clearCookie("token", {
       httpOnly: true,
@@ -69,7 +70,14 @@ const getUserProfile = asyncHandler(async (req, res) => {
     const user = await userGetService(userId);
 
     if (user) {
-      res.status(200).json(user);
+      res.status(200).json({
+    id: user._id,
+    username: user.username,
+    email: user.email,
+    authProvider: user.authProvider,
+    createdAt: user.createdAt,
+    updatedAt: user.updatedAt,
+  });
     } else {
       throw new CustomError("User not found", 404);
     }

@@ -35,12 +35,11 @@ const firebaseLogin = asyncHandler(async (req, res) => {
 
   try {
     const { token, user } = await firebaseLoginService(firebaseToken);
-
     // Set the token in a cookie
     res.cookie("token", token, {
       httpOnly: true,
-      secure: process.env.NODE_ENV === "production", // Set to true in production
-      sameSite: "none", // Allow cross-origin cookies
+      secure: false, // Set to true in production
+      sameSite: "lax", // Allow cross-origin cookies
       maxAge: 24 * 60 * 60 * 1000, // 1 day
     });
 
