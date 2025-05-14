@@ -76,9 +76,9 @@ const searchUserService = async ({
 }) => {
   try {
     let users;
-
+    
     if (id) {
-      users = await User.find({ _id: id });
+      users = await User.findById(id);
     } else {
       const query: any = {};
 
@@ -93,7 +93,7 @@ const searchUserService = async ({
       users = await User.find(query);
     }
 
-    if (!users || users.length === 0) {
+    if (!users) {
       throw new CustomError("No matching users found", 404);
     }
 
