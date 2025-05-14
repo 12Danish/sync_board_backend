@@ -21,6 +21,7 @@ export const registerSocketHandlers = (io: Server) => {
 
   io.on("connection", (socket: Socket) => {
     console.log("A user connected with the socket id", socket.id);
+  
 
     /**
      * Joins the socket to a room identified by the board ID.
@@ -38,6 +39,7 @@ export const registerSocketHandlers = (io: Server) => {
       // Leave previous board if any
       if (previousBoardId && socket.rooms.has(previousBoardId)) {
         socket.leave(previousBoardId);
+         socket.emit("leftBoard", { boardId, userEmail, userId });
         console.log(`User ${socket.id} left previous board ${previousBoardId}`);
         (socket as any).currentBoardId = null;
       }
